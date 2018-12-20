@@ -1,0 +1,12 @@
+<?php
+	require(dirname(__FILE__).'/defined.php');
+	require(dirname(__FILE__).'/utilities.php');
+	require(dirname(__FILE__).'/list-menu.php');
+	require(dirname(__FILE__).'/shortcode-template.php');
+    require(dirname(__FILE__).'/ajax.php');
+    require(dirname(__FILE__).'/filter.php');
+    require(dirname(__FILE__).'/track-post-views.php');
+    require(dirname(__FILE__).'/acf-options.php');
+	require(dirname(__FILE__).'/../lib/menu.php');
+	require(dirname(__FILE__).'/../lib/Pages.php');
+	require(dirname(__FILE__).'/../lib/recently-viewed-products.php');
