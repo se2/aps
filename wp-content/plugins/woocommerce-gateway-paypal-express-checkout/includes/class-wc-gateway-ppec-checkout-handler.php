@@ -59,6 +59,11 @@ class WC_Gateway_PPEC_Checkout_Handler {
 	 * sending anything back to the browser.
 	 */
 	public function init() {
+		if ( version_compare( WC_VERSION, '3.3', '<' ) ) {
+			add_filter( 'wc_checkout_params', array( $this, 'filter_wc_checkout_params' ), 10, 1 );
+		} else {
+			add_filter( 'woocommerce_get_script_data', array( $this, 'filter_wc_checkout_params' ), 10, 2 );
+		}
 		if ( isset( $_GET['startcheckout'] ) && 'true' === $_GET['startcheckout'] ) {
 			ob_start();
 		}
@@ -70,7 +75,7 @@ class WC_Gateway_PPEC_Checkout_Handler {
 	 * @return string
 	 */
 	public function endpoint_page_titles( $title ) {
-		if ( is_main_query() && in_the_loop() && is_page() && is_checkout() && $this->has_active_session() ) {
+		if ( ! is_admin() && is_main_query() && in_the_loop() && is_page() && is_checkout() && $this->has_active_session() ) {
 			$title = __( 'Confirm your PayPal order', 'woocommerce-gateway-paypal-express-checkout' );
 			remove_filter( 'the_title', array( $this, 'endpoint_page_titles' ) );
 		}
@@ -109,18 +114,32 @@ class WC_Gateway_PPEC_Checkout_Handler {
 	 * See also filter_billing_fields below.
 	 *
 	 * @since 1.2.1
+	 * @since 1.5.4 Check to make sure PPEC is even enable before continuing.
 	 * @param $fields array
 	 *
 	 * @return array
 	 */
 	public function filter_default_address_fields( $fields ) {
+		if ( 'yes' !== wc_gateway_ppec()->settings->enabled ) {
+			return $fields;
+		}
+
+		if ( ! apply_filters( 'woocommerce_paypal_express_checkout_address_not_required', ! WC_Gateway_PPEC_Plugin::needs_shipping() ) ) {
+			return $fields;
+		}
+
 		if ( method_exists( WC()->cart, 'needs_shipping' ) && ! WC()->cart->needs_shipping() ) {
-			$not_required_fields = array( 'address_1', 'city', 'state', 'postcode', 'country' );
+			$not_required_fields = array( 'address_1', 'city', 'postcode', 'country' );
 			foreach ( $not_required_fields as $not_required_field ) {
 				if ( array_key_exists( $not_required_field, $fields ) ) {
 					$fields[ $not_required_field ]['required'] = false;
 				}
 			}
+		}
+
+		// Regardless of shipping, PP doesn't have the county required (e.g. using Ireland without a county is acceptable)
+		if ( array_key_exists( 'state', $fields ) ) {
+			$fields['state']['required'] = false;
 		}
 
 		return $fields;
@@ -136,15 +155,21 @@ class WC_Gateway_PPEC_Checkout_Handler {
 	 * This is one of two places we need to filter fields. See also filter_default_address_fields above.
 	 *
 	 * @since 1.2.0
-	 * @version 1.2.1
+	 * @since 1.5.4 Check to make sure PPEC is even enable before continuing.
 	 * @param $billing_fields array
 	 *
 	 * @return array
 	 */
 	public function filter_billing_fields( $billing_fields ) {
+		if ( 'yes' !== wc_gateway_ppec()->settings->enabled ) {
+			return $billing_fields;
+		}
+
+		$require_phone_number = wc_gateway_ppec()->settings->require_phone_number;
+
 		if ( array_key_exists( 'billing_phone', $billing_fields ) ) {
-			$billing_fields['billing_phone']['required'] = false;
-		};
+			$billing_fields['billing_phone']['required'] = 'yes' === $require_phone_number;
+		}
 
 		return $billing_fields;
 	}
@@ -178,22 +203,30 @@ class WC_Gateway_PPEC_Checkout_Handler {
 		}
 
 		$shipping_details = $this->get_mapped_shipping_address( $checkout_details );
-		foreach( $shipping_details as $key => $value ) {
-			$_POST['shipping_' . $key] = $value;
-		}
+		$billing_details  = $this->get_mapped_billing_address( $checkout_details );
 
-		$billing_details = $this->get_mapped_billing_address( $checkout_details );
 		// If the billing address is empty, copy address from shipping
 		if ( empty( $billing_details['address_1'] ) ) {
+			// Set flag so that WC copies billing to shipping
+			$_POST['ship_to_different_address'] = 0;
+
 			$copyable_keys = array( 'address_1', 'address_2', 'city', 'state', 'postcode', 'country' );
 			foreach ( $copyable_keys as $copyable_key ) {
 				if ( array_key_exists( $copyable_key, $shipping_details ) ) {
 					$billing_details[ $copyable_key ] = $shipping_details[ $copyable_key ];
 				}
 			}
+		} else {
+			// Shipping may be different from billing, so set flag to not copy address from billing
+			$_POST['ship_to_different_address'] = 1;
 		}
-		foreach( $billing_details as $key => $value ) {
-			$_POST['billing_' . $key] = $value;
+
+		foreach ( $shipping_details as $key => $value ) {
+			$_POST[ 'shipping_' . $key ] = $value;
+		}
+
+		foreach ( $billing_details as $key => $value ) {
+			$_POST[ 'billing_' . $key ] = $value;
 		}
 	}
 
@@ -227,7 +260,18 @@ class WC_Gateway_PPEC_Checkout_Handler {
 			<?php endif; ?>
 
 			<?php if ( ! empty( $checkout_details->payer_details->phone_number ) ) : ?>
-				<li><strong><?php _e( 'Tel:', 'woocommerce-gateway-paypal-express-checkout' ) ?></strong> <?php echo esc_html( $checkout_details->payer_details->phone_number ); ?></li>
+				<li><strong><?php _e( 'Phone:', 'woocommerce-gateway-paypal-express-checkout' ) ?></strong> <?php echo esc_html( $checkout_details->payer_details->phone_number ); ?></li>
+			<?php elseif ( 'yes' === wc_gateway_ppec()->settings->require_phone_number ) : ?>
+				<li>
+				<?php
+				if ( version_compare( WC_VERSION, '3.0', '<' ) ) {
+					$fields = WC()->checkout->checkout_fields['billing'];
+				} else {
+					$fields = WC()->checkout->get_checkout_fields( 'billing' );
+				}
+				woocommerce_form_field( 'billing_phone', $fields['billing_phone'], WC()->checkout->get_value( 'billing_phone' ) );
+				?>
+				</li>
 			<?php endif; ?>
 		</ul>
 		<?php
@@ -293,9 +337,10 @@ class WC_Gateway_PPEC_Checkout_Handler {
 			return;
 		}
 
-		if ( ! WC()->cart->needs_shipping() ) {
+		if ( ! WC_Gateway_PPEC_Plugin::needs_shipping() ) {
 			return;
 		}
+
 		?>
 		<h3><?php _e( 'Shipping details', 'woocommerce-gateway-paypal-express-checkout' ); ?></h3>
 		<?php
@@ -320,6 +365,14 @@ class WC_Gateway_PPEC_Checkout_Handler {
 			return array();
 		}
 
+		$phone = '';
+
+		if ( ! empty( $checkout_details->payer_details->phone_number ) ) {
+			$phone = $checkout_details->payer_details->phone_number;
+		} elseif ( 'yes' === wc_gateway_ppec()->settings->require_phone_number && ! empty( $_POST['billing_phone'] ) ) {
+			$phone = wc_clean( $_POST['billing_phone'] );
+		}
+
 		return array(
 			'first_name' => $checkout_details->payer_details->first_name,
 			'last_name'  => $checkout_details->payer_details->last_name,
@@ -330,7 +383,7 @@ class WC_Gateway_PPEC_Checkout_Handler {
 			'state'      => $checkout_details->payer_details->billing_address ? $checkout_details->payer_details->billing_address->getState() : '',
 			'postcode'   => $checkout_details->payer_details->billing_address ? $checkout_details->payer_details->billing_address->getZip() : '',
 			'country'    => $checkout_details->payer_details->billing_address ? $checkout_details->payer_details->billing_address->getCountry() : $checkout_details->payer_details->country,
-			'phone'      => $checkout_details->payer_details->phone_number,
+			'phone'      => $phone,
 			'email'      => $checkout_details->payer_details->email,
 		);
 	}
@@ -363,7 +416,7 @@ class WC_Gateway_PPEC_Checkout_Handler {
 	}
 
 	/**
-	 * Checks data is correctly set when returning from PayPal Express Checkout
+	 * Checks data is correctly set when returning from PayPal Checkout
 	 */
 	public function maybe_return_from_paypal() {
 		if ( empty( $_GET['woo-paypal-return'] ) || empty( $_GET['token'] ) || empty( $_GET['PayerID'] ) ) {
@@ -383,6 +436,11 @@ class WC_Gateway_PPEC_Checkout_Handler {
 		// Store values in session.
 		$session->checkout_completed = true;
 		$session->payer_id           = $payer_id;
+		$session->token              = $token;
+
+		// Update customer addresses here from PayPal selection so they can be used to calculate local taxes.
+		$this->update_customer_addresses_from_paypal( $token );
+
 		WC()->session->set( 'paypal', $session );
 
 		try {
@@ -422,6 +480,48 @@ class WC_Gateway_PPEC_Checkout_Handler {
 	}
 
 	/**
+	 * Updates shipping and billing addresses.
+	 *
+	 * Retrieves shipping and billing addresses from PayPal session.
+	 * This should be done prior to generating order confirmation so
+	 * local taxes can be calculated and displayed to customer.
+	 *
+	 * @since 1.6.2.
+	 *
+	 * @param string $token Token
+	 *
+	 * @return void
+	 */
+	private function update_customer_addresses_from_paypal( $token ) {
+		// Get the buyer details from PayPal.
+		try {
+			$checkout_details = $this->get_checkout_details( $token );
+		} catch ( PayPal_API_Exception $e ) {
+			wc_add_notice( $e->getMessage(), 'error' );
+			return;
+		}
+		$shipping_details = $this->get_mapped_shipping_address( $checkout_details );
+		$billing_details  = $this->get_mapped_billing_address( $checkout_details );
+
+		$customer = WC()->customer;
+
+		// Update billing/shipping addresses.
+		$customer->set_billing_address( $billing_details['address_1'] );
+		$customer->set_billing_address_2( $billing_details['address_2'] );
+		$customer->set_billing_city( $billing_details['city'] );
+		$customer->set_billing_postcode( $billing_details['postcode'] );
+		$customer->set_billing_state( $billing_details['state'] );
+		$customer->set_billing_country( $billing_details['country'] );
+
+		$customer->set_shipping_address( $shipping_details['address_1'] );
+		$customer->set_shipping_address_2( $shipping_details['address_2'] );
+		$customer->set_shipping_city( $shipping_details['city'] );
+		$customer->set_shipping_postcode( $shipping_details['postcode'] );
+		$customer->set_shipping_state( $shipping_details['state'] );
+		$customer->set_shipping_country( $shipping_details['country'] );
+	}
+
+	/**
 	 * Maybe disable this or other gateways.
 	 *
 	 * @since 1.0.0
@@ -445,8 +545,9 @@ class WC_Gateway_PPEC_Checkout_Handler {
 			unset( $gateways['ppec_paypal'] );
 		}
 
-		// If the cart total is zero (e.g. because of a coupon), don't allow this gateway
-		if ( is_cart() || is_checkout() ) {
+		// If the cart total is zero (e.g. because of a coupon), don't allow this gateway.
+		// We do this only if we're on the checkout page (is_checkout), but not on the order-pay page (is_checkout_pay_page)
+		if ( is_cart() || ( is_checkout() && ! is_checkout_pay_page() ) ) {
 			if ( isset( $gateways['ppec_paypal'] ) && ( 0 >= WC()->cart->total ) ) {
 				unset( $gateways['ppec_paypal'] );
 			}
@@ -576,74 +677,78 @@ class WC_Gateway_PPEC_Checkout_Handler {
 	}
 
 	/**
-	 * Handler when buyer is checking out from cart page.
+	 * Generic checkout handler.
 	 *
-	 * @todo This methods looks similar to start_checkout_from_checkout. Please
-	 *       refactor by merging them.
+	 * @param array $context_args Context parameters for checkout.
+	 * @param array $session_data_args Session parameters (token pre-populated).
 	 *
 	 * @throws PayPal_API_Exception
+	 * @return string Redirect URL.
 	 */
-	public function start_checkout_from_cart() {
+	protected function start_checkout( $context_args, $session_data_args ) {
 		$settings     = wc_gateway_ppec()->settings;
 		$client       = wc_gateway_ppec()->client;
-		$context_args = array(
-			'start_from' => 'cart',
-		);
 		$context_args['create_billing_agreement'] = $this->needs_billing_agreement_creation( $context_args );
 
 		$params   = $client->get_set_express_checkout_params( $context_args );
 		$response = $client->set_express_checkout( $params );
-		if ( $client->response_has_success_status( $response ) ) {
-			WC()->session->paypal = new WC_Gateway_PPEC_Session_Data(
-				array(
-					'token'             => $response['TOKEN'],
-					'source'            => 'cart',
-					'expires_in'        => $settings->get_token_session_length(),
-					'use_paypal_credit' => wc_gateway_ppec_is_using_credit(),
-				)
-			);
 
-			return $settings->get_paypal_redirect_url( $response['TOKEN'], false );
+		if ( $client->response_has_success_status( $response ) ) {
+			$session_data_args['token'] = $response['TOKEN'];
+
+			WC()->session->paypal = new WC_Gateway_PPEC_Session_Data( $session_data_args );
+
+			return $settings->get_paypal_redirect_url( $response['TOKEN'], true, $session_data_args['use_paypal_credit'] );
 		} else {
 			throw new PayPal_API_Exception( $response );
 		}
 	}
 
 	/**
-	 * Handler when buyer is checking out from checkout page.
+	 * Handler when buyer is checking out prior to order creation.
 	 *
-	 * @todo This methods looks similar to start_checkout_from_cart. Please
-	 *       refactor by merging them.
-	 *
-	 * @throws PayPal_API_Exception
-	 *
-	 * @param int $order_id Order ID
+	 * @return string Redirect URL.
 	 */
-	public function start_checkout_from_checkout( $order_id ) {
+	public function start_checkout_from_cart( $skip_checkout = true ) {
 		$settings     = wc_gateway_ppec()->settings;
-		$client       = wc_gateway_ppec()->client;
+
 		$context_args = array(
-			'start_from' => 'checkout',
-			'order_id'   => $order_id,
+			'skip_checkout' => $skip_checkout,
 		);
-		$context_args['create_billing_agreement'] = $this->needs_billing_agreement_creation( $context_args );
 
-		$params   = $client->get_set_express_checkout_params( $context_args );
-		$response = $client->set_express_checkout( $params );
-		if ( $client->response_has_success_status( $response ) ) {
-			WC()->session->paypal = new WC_Gateway_PPEC_Session_Data(
-				array(
-					'token'      => $response['TOKEN'],
-					'source'     => 'order',
-					'order_id'   => $order_id,
-					'expires_in' => $settings->get_token_session_length()
-				)
-			);
+		$session_data_args = array(
+			'source'            => 'cart',
+			'expires_in'        => $settings->get_token_session_length(),
+			'use_paypal_credit' => wc_gateway_ppec_is_using_credit(),
+		);
 
-			return $settings->get_paypal_redirect_url( $response['TOKEN'], true );
-		} else {
-			throw new PayPal_API_Exception( $response );
-		}
+		return $this->start_checkout( $context_args, $session_data_args );
+	}
+
+	/**
+	 * Handler when buyer is checking out after order is created (i.e. from checkout page with Smart Payment Buttons disabled).
+	 *
+	 * @param int  $order_id Order ID.
+	 * @param bool $use_ppc  Whether to use PayPal credit.
+	 *
+	 * @return string Redirect URL.
+	 */
+	public function start_checkout_from_order( $order_id, $use_ppc ) {
+		$settings     = wc_gateway_ppec()->settings;
+
+		$context_args = array(
+			'skip_checkout' => false,
+			'order_id'      => $order_id,
+		);
+
+		$session_data_args = array(
+			'source'            => 'order',
+			'order_id'          => $order_id,
+			'expires_in'        => $settings->get_token_session_length(),
+			'use_paypal_credit' => $use_ppc,
+		);
+
+		return $this->start_checkout( $context_args, $session_data_args );
 	}
 
 	/**
@@ -654,6 +759,10 @@ class WC_Gateway_PPEC_Checkout_Handler {
 	 * @return bool Returns true if buyer checkout from checkout page
 	 */
 	public function is_started_from_checkout_page() {
+		if ( ! is_object( WC()->session ) ) {
+			return false;
+		}
+
 		$session = WC()->session->get( 'paypal' );
 
 		return (
@@ -744,7 +853,7 @@ class WC_Gateway_PPEC_Checkout_Handler {
 		$billing_agreement_id = $old_wc ? get_post_meta( $order_id, '_ppec_billing_agreement_id', true ) : $order->get_meta( '_ppec_billing_agreement_id', true );
 
 		foreach ( $subscriptions as $subscription ) {
-			update_post_meta( $subscription->id, '_ppec_billing_agreement_id', $billing_agreement_id );
+			update_post_meta( is_callable( array( $subscription, 'get_id' ) ) ? $subscription->get_id() : $subscription->id, '_ppec_billing_agreement_id', $billing_agreement_id );
 		}
 	}
 
@@ -782,20 +891,20 @@ class WC_Gateway_PPEC_Checkout_Handler {
 			}
 
 			$paymentAction = $settings->get_paymentaction();
-			if ( 'sale' == $paymentAction ) {
-				$txn = array(
-					'txnID'           => $payment_details->payments[0]->transaction_id,
-					'amount'          => $order->get_total(),
-					'refunded_amount' => 0
-				);
-				if ( 'Completed' == $payment_details->payments[0]->payment_status ) {
-					$txn['status'] = 'Completed';
-				} else {
-					$txn['status'] = $payment_details->payments[0]->payment_status . '_' . $payment_details->payments[0]->pending_reason;
-				}
-				$txnData['refundable_txns'][] = $txn;
 
-			} elseif ( 'authorization' == $paymentAction ) {
+			$txn = array(
+				'txnID'           => $payment_details->payments[0]->transaction_id,
+				'amount'          => $order->get_total(),
+				'refunded_amount' => 0
+			);
+			if ( 'Completed' == $payment_details->payments[0]->payment_status ) {
+				$txn['status'] = 'Completed';
+			} else {
+				$txn['status'] = $payment_details->payments[0]->payment_status . '_' . $payment_details->payments[0]->pending_reason;
+			}
+			$txnData['refundable_txns'][] = $txn;
+
+			if ( 'authorization' == $paymentAction ) {
 				$txnData['auth_status'] = 'NotCompleted';
 			}
 
@@ -823,13 +932,9 @@ class WC_Gateway_PPEC_Checkout_Handler {
 	public function handle_payment_response( $order, $payment ) {
 		// Store meta data to order
 		$old_wc = version_compare( WC_VERSION, '3.0', '<' );
-		if ( $old_wc ) {
-			update_post_meta( $order->id, '_paypal_status', strtolower( $payment->payment_status ) );
-			update_post_meta( $order->id, '_transaction_id', $payment->transaction_id );
-		} else {
-			$order->update_meta_data( '_paypal_status', strtolower( $payment->payment_status ) );
-			$order->update_meta_data( '_transaction_id', $payment->transaction_id );
-		}
+
+		update_post_meta( $old_wc ? $order->id : $order->get_id(), '_paypal_status', strtolower( $payment->payment_status ) );
+		update_post_meta( $old_wc ? $order->id : $order->get_id(), '_transaction_id', $payment->transaction_id );
 
 		// Handle $payment response
 		if ( 'completed' === strtolower( $payment->payment_status ) ) {
@@ -841,9 +946,11 @@ class WC_Gateway_PPEC_Checkout_Handler {
 				$order->update_status( 'on-hold', sprintf( __( 'Payment pending (%s).', 'woocommerce-gateway-paypal-express-checkout' ), $payment->pending_reason ) );
 			}
 			if ( $old_wc ) {
-				$order->reduce_order_stock();
+				if ( ! get_post_meta( $order->id, '_order_stock_reduced', true ) ) {
+					$order->reduce_order_stock();
+				}
 			} else {
-				wc_reduce_stock_levels( $order->get_id() );
+				wc_maybe_reduce_stock_levels( $order->get_id() );
 			}
 		}
 	}
@@ -861,14 +968,13 @@ class WC_Gateway_PPEC_Checkout_Handler {
 		if ( empty( $_GET['woo-paypal-return'] ) || empty( $_GET['token'] ) || empty( $_GET['PayerID'] ) ) {
 			return $packages;
 		}
-		// Shipping details from PayPal
 
+		// Shipping details from PayPal
 		try {
 			$checkout_details = $this->get_checkout_details( wc_clean( $_GET['token'] ) );
 		} catch ( PayPal_API_Exception $e ) {
 			return $packages;
 		}
-
 
 		$destination = $this->get_mapped_shipping_address( $checkout_details );
 
@@ -890,30 +996,86 @@ class WC_Gateway_PPEC_Checkout_Handler {
 	 * @param array $args {
 	 *     Context args to retrieve SetExpressCheckout parameters.
 	 *
-	 *     @type string $start_from Start from 'cart' or 'checkout'.
-	 *     @type int    $order_id   Order ID if $start_from is 'checkout'.
+	 *     @type int    $order_id   Order ID if order has been created.
 	 * }
 	 *
 	 * @return bool Returns true if billing agreement is needed in the purchase
 	 */
 	public function needs_billing_agreement_creation( $args ) {
 		$needs_billing_agreement = false;
-		switch ( $args['start_from'] ) {
-			case 'cart':
-				if ( class_exists( 'WC_Subscriptions_Cart' ) ) {
-					$needs_billing_agreement = WC_Subscriptions_Cart::cart_contains_subscription();
-				}
-				break;
-			case 'checkout':
-				if ( function_exists( 'wcs_order_contains_subscription' ) ) {
-					$needs_billing_agreement = wcs_order_contains_subscription( $args['order_id'] );
-				}
-				if ( function_exists( 'wcs_order_contains_renewal' ) ) {
-					$needs_billing_agreement = ( $needs_billing_agreement || wcs_order_contains_renewal( $args['order_id'] ) );
-				}
-				break;
+
+		if ( empty( $args['order_id'] ) ) {
+			if ( class_exists( 'WC_Subscriptions_Cart' ) ) {
+				$needs_billing_agreement = WC_Subscriptions_Cart::cart_contains_subscription();
+			}
+		} else {
+			if ( function_exists( 'wcs_order_contains_subscription' ) ) {
+				$needs_billing_agreement = wcs_order_contains_subscription( $args['order_id'] );
+			}
+			if ( function_exists( 'wcs_order_contains_renewal' ) ) {
+				$needs_billing_agreement = ( $needs_billing_agreement || wcs_order_contains_renewal( $args['order_id'] ) );
+			}
 		}
 
 		return $needs_billing_agreement;
+	}
+
+	/**
+	 * Filter checkout AJAX endpoint so it carries the query string after buyer is
+	 * redirected from PayPal.
+	 *
+	 * To explain the reason why we need to store this in the session, we
+	 * first need to take a look at how things flow:
+	 *
+	 * For guest checkout with Geolocation enabled:
+	 *
+	 * 1. On the checkout screen, WooCommerce gets shipping information and
+	 * this hook is called. We have `$_GET` context, so we will replace
+	 * `$packages[0]['destination']` using the PP account (Country 1).
+	 *
+	 * 2. Package hash gets stored by `WC_Shipping::calculate_shipping_for_package`
+	 * for destination "Country 1".
+	 *
+	 * 3. The AJAX `update_order_review` will be called from core. At this
+	 * point, we do not have `$_GET` context, so this method will return
+	 * the original packages. Note that the original packages will now
+	 * contain shipping information based on Geolocation (Country 2, may be
+	 * distinct from Country 1).
+	 *
+	 * 4. At this point, the package hash will be different, and thus the
+	 * call to `get_rates_for_package` within `WC_Shipping::calculate_shipping_for_package`
+	 * will re-trigger shipping extensions, such as FedEx, USPS, etc.
+	 *
+	 * To avoid this behaviour, make sure we store the packages and their
+	 * correct destination based on PP account info for re-usage in any
+	 * AJAX calls where we don't have PP token context.
+	 *
+	 * Related core commits: 75cc4f9, 2ff1ee1
+	 *
+	 * @since 1.4.7
+	 *
+	 * @param array  $params
+	 * @param string $handle
+	 *
+	 * @return string URL.
+	 */
+	public function filter_wc_checkout_params( $params, $handle = '' ) {
+		if ( 'wc-checkout' !== $handle && ! doing_action( 'wc_checkout_params' ) ) {
+			return $params;
+		}
+
+		$fields = array( 'woo-paypal-return', 'token', 'PayerID' );
+
+		$params['wc_ajax_url'] = remove_query_arg( 'wc-ajax', $params['wc_ajax_url'] );
+
+		foreach ( $fields as $field ) {
+			if ( ! empty( $_GET[ $field ] ) ) {
+				$params['wc_ajax_url'] = add_query_arg( $field, $_GET[ $field ], $params['wc_ajax_url'] );
+			}
+		}
+
+		$params['wc_ajax_url'] = add_query_arg( 'wc-ajax', '%%endpoint%%', $params['wc_ajax_url'] );
+
+		return $params;
 	}
 }

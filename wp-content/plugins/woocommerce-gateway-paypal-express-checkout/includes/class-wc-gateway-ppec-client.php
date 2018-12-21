@@ -227,8 +227,8 @@ class WC_Gateway_PPEC_Client {
 	 * @param array $args {
 	 *     Context args to retrieve SetExpressCheckout parameters.
 	 *
-	 *     @type string $start_from               Start from 'cart' or 'checkout'.
-	 *     @type int    $order_id                 Order ID if $start_from is 'checkout'.
+	 *     @type string $skip_checkout            Whether checking out ahead of store checkout screen.
+	 *     @type int    $order_id                 Order ID if checking out after order is created.
 	 *     @type bool   $create_billing_agreement Whether billing agreement creation
 	 *                                            is needed after returned from PayPal.
 	 * }
@@ -239,7 +239,7 @@ class WC_Gateway_PPEC_Client {
 		$args = wp_parse_args(
 			$args,
 			array(
-				'start_from'               => 'cart',
+				'skip_checkout'            => true,
 				'order_id'                 => '',
 				'create_billing_agreement' => false,
 			)
@@ -248,8 +248,10 @@ class WC_Gateway_PPEC_Client {
 		$settings = wc_gateway_ppec()->settings;
 
 		$params              = array();
-		$params['LOGOIMG']   = $settings->logo_image_url;
-		$params['HDRIMG']    = $settings->header_image_url;
+		$logo_url_or_id      = $settings->logo_image_url;
+		$header_url_or_id    = $settings->header_image_url;
+		$params['LOGOIMG']   = filter_var( $logo_url_or_id, FILTER_VALIDATE_URL )   ? $logo_url_or_id   : wp_get_attachment_image_url( $logo_url_or_id, 'thumbnail' );
+		$params['HDRIMG']    = filter_var( $header_url_or_id, FILTER_VALIDATE_URL ) ? $header_url_or_id : wp_get_attachment_image_url( $header_url_or_id, 'thumbnail' );
 		$params['PAGESTYLE'] = $settings->page_style;
 		$params['BRANDNAME'] = $settings->get_brand_name();
 		$params['RETURNURL'] = $this->_get_return_url( $args );
@@ -259,7 +261,8 @@ class WC_Gateway_PPEC_Client {
 			$params['USERSELECTEDFUNDINGSOURCE'] = 'Finance';
 		}
 
-		if ( 'checkout' === $args['start_from'] ) {
+		if ( ! $args['skip_checkout'] ) {
+			// Display shipping address sent from checkout page, rather than selecting from addresses on file with PayPal.
 			$params['ADDROVERRIDE'] = '1';
 		}
 
@@ -286,13 +289,10 @@ class WC_Gateway_PPEC_Client {
 		$params['PAYMENTREQUEST_0_INVNUM']       = '';
 		$params['PAYMENTREQUEST_0_CURRENCYCODE'] = get_woocommerce_currency();
 
-		switch ( $args['start_from'] ) {
-			case 'checkout':
-				$details = $this->_get_details_from_order( $args['order_id'] );
-				break;
-			case 'cart':
-				$details = $this->_get_details_from_cart();
-				break;
+		if ( ! empty( $args['order_id'] ) ) {
+			$details = $this->_get_details_from_order( $args['order_id'] );
+		} else {
+			$details = $this->_get_details_from_cart();
 		}
 
 		$params = array_merge(
@@ -303,7 +303,7 @@ class WC_Gateway_PPEC_Client {
 				'PAYMENTREQUEST_0_SHIPPINGAMT'  => $details['shipping'],
 				'PAYMENTREQUEST_0_TAXAMT'       => $details['order_tax'],
 				'PAYMENTREQUEST_0_SHIPDISCAMT'  => $details['ship_discount_amount'],
-				'NOSHIPPING'                    => WC()->cart->needs_shipping() ? 0 : 1,
+				'NOSHIPPING'                    => WC_Gateway_PPEC_Plugin::needs_shipping() ? 0 : 1,
 			)
 		);
 
@@ -325,7 +325,7 @@ class WC_Gateway_PPEC_Client {
 			foreach ( $details['items'] as $line_item_key => $values ) {
 				$line_item_params = array(
 					'L_PAYMENTREQUEST_0_NAME' . $count => $values['name'],
-					'L_PAYMENTREQUEST_0_DESC' . $count => ! empty( $values['description'] ) ? strip_tags( $values['description'] ) : '',
+					'L_PAYMENTREQUEST_0_DESC' . $count => ! empty( $values['description'] ) ? substr( strip_tags( $values['description'] ), 0, 127 ) : '',
 					'L_PAYMENTREQUEST_0_QTY' . $count  => $values['quantity'],
 					'L_PAYMENTREQUEST_0_AMT' . $count  => $values['amount'],
 				);
@@ -348,8 +348,6 @@ class WC_Gateway_PPEC_Client {
 	 * @param array $context_args {
 	 *     Context args to retrieve SetExpressCheckout parameters.
 	 *
-	 *     @type string $start_from               Start from 'cart' or 'checkout'.
-	 *     @type int    $order_id                 Order ID if $start_from is 'checkout'.
 	 *     @type bool   $create_billing_agreement Whether billing agreement creation
 	 *                                            is needed after returned from PayPal.
 	 * }
@@ -408,11 +406,14 @@ class WC_Gateway_PPEC_Client {
 	 * @return array Line item
 	 */
 	protected function _get_extra_offset_line_item( $amount ) {
+		$settings = wc_gateway_ppec()->settings;
+		$decimals = $settings->get_number_of_decimal_digits();
+
 		return array(
 			'name'        => 'Line Item Amount Offset',
 			'description' => 'Adjust cart calculation discrepancy',
 			'quantity'    => 1,
-			'amount'      => $amount,
+			'amount'      => round( $amount, $decimals ),
 		);
 	}
 
@@ -426,11 +427,14 @@ class WC_Gateway_PPEC_Client {
 	 * @return array Line item
 	 */
 	protected function _get_extra_discount_line_item( $amount ) {
+		$settings = wc_gateway_ppec()->settings;
+		$decimals = $settings->get_number_of_decimal_digits();
+
 		return  array(
 			'name'        => 'Discount',
 			'description' => 'Discount Amount',
 			'quantity'    => 1,
-			'amount'      => '-' . $amount,
+			'amount'      => '-' . round( $amount, $decimals ),
 		);
 	}
 
@@ -448,75 +452,18 @@ class WC_Gateway_PPEC_Client {
 		$settings = wc_gateway_ppec()->settings;
 
 		$decimals      = $settings->get_number_of_decimal_digits();
-		$discounts     = round( WC()->cart->get_cart_discount_total(), $decimals );
 		$rounded_total = $this->_get_rounded_total_in_cart();
+		$discounts     = WC()->cart->get_cart_discount_total();
 
 		$details = array(
 			'total_item_amount' => round( WC()->cart->cart_contents_total, $decimals ) + $discounts,
 			'order_tax'         => round( WC()->cart->tax_total + WC()->cart->shipping_tax_total, $decimals ),
 			'shipping'          => round( WC()->cart->shipping_total, $decimals ),
 			'items'             => $this->_get_paypal_line_items_from_cart(),
+			'shipping_address'  => $this->_get_address_from_customer(),
 		);
 
-		$details['order_total'] = round(
-			$details['total_item_amount'] + $details['order_tax'] + $details['shipping'],
-			$decimals
-		);
-
-		// Compare WC totals with what PayPal will calculate to see if they match.
-		// if they do not match, check to see what the merchant would like to do.
-		// Options are to remove line items or add a line item to adjust for
-		// the difference.
-		if ( $details['total_item_amount'] != $rounded_total ) {
-			if ( 'add' === $settings->get_subtotal_mismatch_behavior() ) {
-				// Add line item to make up different between WooCommerce
-				// calculations and PayPal calculations.
-				$diff = round( $details['total_item_amount'] - $rounded_total, $decimals );
-				if ( $diff != 0 ) {
-					$extra_line_item = $this->_get_extra_offset_line_item( $diff );
-
-					$details['items'][]            = $extra_line_item;
-					$details['total_item_amount'] += $extra_line_item['amount'];
-					$details['order_total']       += $extra_line_item['amount'];
-				}
-			} else {
-				// Omit line items altogether.
-				unset( $details['items'] );
-			}
-		}
-
-		// Enter discount shenanigans. Item total cannot be 0 so make modifications
-		// accordingly.
-		if ( $details['total_item_amount'] == $discounts ) {
-			// Omit line items altogether.
-			unset( $details['items'] );
-			$details['ship_discount_amount'] = 0;
-			$details['total_item_amount']   -= $discounts;
-			$details['order_total']         -= $discounts;
-		} else {
-			if ( $discounts > 0 ) {
-				$details['items'][] = $this->_get_extra_offset_line_item( - abs( $discounts ) );
-			}
-
-			$details['ship_discount_amount'] = 0;
-			$details['total_item_amount']   -= $discounts;
-			$details['order_total']         -= $discounts;
-		}
-
-		// If the totals don't line up, adjust the tax to make it work (it's
-		// probably a tax mismatch).
-		$wc_order_total = round( WC()->cart->total, $decimals );
-		if ( $wc_order_total != $details['order_total'] ) {
-			$details['order_tax']  += $wc_order_total - $details['order_total'];
-			$details['order_total'] = $wc_order_total;
-		}
-		$details['order_tax'] = round( $details['order_tax'], $decimals );
-
-		if ( ! is_numeric( $details['shipping'] ) ) {
-			$details['shipping'] = 0;
-		}
-
-		return $details;
+		return $this->get_details( $details, $discounts, $rounded_total, WC()->cart->total );
 	}
 
 	/**
@@ -532,7 +479,7 @@ class WC_Gateway_PPEC_Client {
 
 		$items = array();
 		foreach ( WC()->cart->cart_contents as $cart_item_key => $values ) {
-			$amount = round( $values['line_subtotal'] / $values['quantity'] , $decimals );
+			$amount = round( $values['line_total'] / $values['quantity'] , $decimals );
 
 			if ( version_compare( WC_VERSION, '3.0', '<' ) ) {
 				$name = $values['data']->post->post_title;
@@ -577,6 +524,102 @@ class WC_Gateway_PPEC_Client {
 	}
 
 	/**
+	 * Get details from populated price array
+	 *
+	 * @since 1.4.1
+	 *
+	 * @param array $details Prices
+	 *
+	 * @return array Details
+	 */
+	protected function get_details( $details, $discounts, $rounded_total, $total ) {
+		$settings = wc_gateway_ppec()->settings;
+		$decimals = $settings->get_number_of_decimal_digits();
+
+		$discounts = round( $discounts, $decimals );
+
+		$details['order_total'] = round(
+			$details['total_item_amount'] + $details['order_tax'] + $details['shipping'],
+			$decimals
+		);
+
+		// Compare WC totals with what PayPal will calculate to see if they match.
+		// if they do not match, check to see what the merchant would like to do.
+		// Options are to remove line items or add a line item to adjust for
+		// the difference.
+		$diff = 0;
+
+		if ( $details['total_item_amount'] != $rounded_total ) {
+			if ( 'add' === $settings->get_subtotal_mismatch_behavior() ) {
+				// Add line item to make up different between WooCommerce
+				// calculations and PayPal calculations.
+				$diff = round( $details['total_item_amount'] - $rounded_total, $decimals );
+				if ( abs( $diff ) > 0.000001 && 0.0 !== (float) $diff ) {
+					$extra_line_item = $this->_get_extra_offset_line_item( $diff );
+
+					$details['items'][]            = $extra_line_item;
+					$details['total_item_amount'] += $extra_line_item['amount'];
+					$details['order_total']       += $extra_line_item['amount'];
+				}
+			} else {
+				// Omit line items altogether.
+				unset( $details['items'] );
+			}
+		}
+
+		// Enter discount shenanigans. Item total cannot be 0 so make modifications
+		// accordingly.
+		if ( $details['total_item_amount'] == $discounts ) {
+			// Omit line items altogether.
+			unset( $details['items'] );
+		}
+
+		$details['ship_discount_amount'] = 0;
+
+		// AMT
+		$details['order_total']       = $details['order_total'] - $discounts;
+
+		// ITEMAMT
+		$details['total_item_amount'] = $details['total_item_amount'] - $discounts;
+
+		// If the totals don't line up, adjust the tax to make it work (it's
+		// probably a tax mismatch).
+		$wc_order_total = round( $total, $decimals );
+		$discounted_total = $details['order_total'];
+
+		if ( $wc_order_total != $discounted_total ) {
+			// tax cannot be negative
+			if ( $discounted_total < $wc_order_total ) {
+				$details['order_tax'] += $wc_order_total - $discounted_total;
+				$details['order_tax'] = round( $details['order_tax'], $decimals );
+			} else {
+				$details['ship_discount_amount'] += $wc_order_total - $discounted_total;
+				$details['ship_discount_amount'] = round( $details['ship_discount_amount'], $decimals );
+			}
+
+			$details['order_total'] = $wc_order_total;
+		}
+
+		if ( ! is_numeric( $details['shipping'] ) ) {
+			$details['shipping'] = 0;
+		}
+
+		$lisum = 0;
+
+		if ( ! empty( $details['items'] ) ) {
+			foreach ( $details['items'] as $li => $values ) {
+				$lisum += $values['quantity'] * $values['amount'];
+			}
+		}
+
+		if ( abs( $lisum ) > 0.000001 && 0.0 !== (float) $diff ) {
+			$details['items'][] = $this->_get_extra_offset_line_item( $details['total_item_amount'] - $lisum );
+		}
+
+		return $details;
+	}
+
+	/**
 	 * Get details from given order_id.
 	 *
 	 * This is the details when buyer is checking out from checkout page.
@@ -592,80 +635,44 @@ class WC_Gateway_PPEC_Client {
 		$settings = wc_gateway_ppec()->settings;
 
 		$decimals      = $settings->is_currency_supports_zero_decimal() ? 0 : 2;
-		$discounts     = round( $order->get_total_discount(), $decimals );
 		$rounded_total = $this->_get_rounded_total_in_order( $order );
+		$discounts     = $order->get_total_discount();
 
 		$details = array(
+			'total_item_amount' => round( $order->get_subtotal(), $decimals ) + $discounts,
 			'order_tax'         => round( $order->get_total_tax(), $decimals ),
 			'shipping'          => round( ( version_compare( WC_VERSION, '3.0', '<' ) ? $order->get_total_shipping() : $order->get_shipping_total() ), $decimals ),
-			'total_item_amount' => round( $order->get_subtotal(), $decimals ),
 			'items'             => $this->_get_paypal_line_items_from_order( $order ),
 		);
 
-		$details['order_total'] = round( $details['total_item_amount'] + $details['order_tax'] + $details['shipping'], $decimals );
-
-		// Compare WC totals with what PayPal will calculate to see if they match.
-		// if they do not match, check to see what the merchant would like to do.
-		// Options are to remove line items or add a line item to adjust for
-		// the difference.
-		if ( $details['total_item_amount'] != $rounded_total ) {
-			if ( 'add' === $settings->get_subtotal_mismatch_behavior() ) {
-				// Add line item to make up different between WooCommerce
-				// calculations and PayPal calculations.
-				$diff = round( $details['total_item_amount'] - $rounded_total, $decimals );
-
-				$details['items'][] = $this->_get_extra_offset_line_item( $diff );
-
-			} else {
-				// Omit line items altogether.
-				unset( $details['items'] );
-			}
-		}
-
-		// Enter discount shenanigans. Item total cannot be 0 so make modifications
-		// accordingly.
-		if ( $details['total_item_amount'] == $discounts ) {
-			// Omit line items altogether.
-			unset( $details['items'] );
-			$details['ship_discount_amount'] = 0;
-			$details['total_item_amount']   -= $discounts;
-			$details['order_total']         -= $discounts;
-		} else {
-			if ( $discounts > 0 ) {
-				$details['items'][] = $this->_get_extra_discount_line_item( $discounts );
-
-				$details['total_item_amount'] -= $discounts;
-				$details['order_total']       -= $discounts;
-			}
-
-			$details['ship_discount_amount'] = 0;
-		}
-
-		// If the totals don't line up, adjust the tax to make it work (it's
-		// probably a tax mismatch).
-		$wc_order_total = round( $order->get_total(), $decimals );
-		if ( $wc_order_total != $details['order_total'] ) {
-			$details['order_tax']  += $wc_order_total - $details['order_total'];
-			$details['order_total'] = $wc_order_total;
-		}
-		$details['order_tax'] = round( $details['order_tax'], $decimals );
-
-		if ( ! is_numeric( $details['shipping'] ) ) {
-			$details['shipping'] = 0;
-		}
+		$details = $this->get_details( $details, $order->get_total_discount(), $rounded_total, $order->get_total() );
 
 		// PayPal shipping address from order.
 		$shipping_address = new PayPal_Address;
 
 		$old_wc = version_compare( WC_VERSION, '3.0', '<' );
-		$shipping_first_name = $old_wc ? $order->shipping_first_name : $order->get_shipping_first_name();
-		$shipping_last_name  = $old_wc ? $order->shipping_last_name  : $order->get_shipping_last_name();
-		$shipping_address_1  = $old_wc ? $order->shipping_address_1  : $order->get_shipping_address_1();
-		$shipping_address_2  = $old_wc ? $order->shipping_address_2  : $order->get_shipping_address_2();
-		$shipping_city       = $old_wc ? $order->shipping_city       : $order->get_shipping_city();
-		$shipping_state      = $old_wc ? $order->shipping_state      : $order->get_shipping_state();
-		$shipping_postcode   = $old_wc ? $order->shipping_postcode   : $order->get_shipping_postcode();
-		$shipping_country    = $old_wc ? $order->shipping_country    : $order->get_shipping_country();
+
+		if ( ( $old_wc && ( $order->shipping_address_1 || $order->shipping_address_2 ) ) || ( ! $old_wc && $order->has_shipping_address() ) ) {
+			$shipping_first_name = $old_wc ? $order->shipping_first_name : $order->get_shipping_first_name();
+			$shipping_last_name  = $old_wc ? $order->shipping_last_name  : $order->get_shipping_last_name();
+			$shipping_address_1  = $old_wc ? $order->shipping_address_1  : $order->get_shipping_address_1();
+			$shipping_address_2  = $old_wc ? $order->shipping_address_2  : $order->get_shipping_address_2();
+			$shipping_city       = $old_wc ? $order->shipping_city       : $order->get_shipping_city();
+			$shipping_state      = $old_wc ? $order->shipping_state      : $order->get_shipping_state();
+			$shipping_postcode   = $old_wc ? $order->shipping_postcode   : $order->get_shipping_postcode();
+			$shipping_country    = $old_wc ? $order->shipping_country    : $order->get_shipping_country();
+		} else {
+			// Fallback to billing in case no shipping methods are set. The address returned from PayPal
+			// will be stored in the order as billing.
+			$shipping_first_name = $old_wc ? $order->billing_first_name : $order->get_billing_first_name();
+			$shipping_last_name  = $old_wc ? $order->billing_last_name  : $order->get_billing_last_name();
+			$shipping_address_1  = $old_wc ? $order->billing_address_1  : $order->get_billing_address_1();
+			$shipping_address_2  = $old_wc ? $order->billing_address_2  : $order->get_billing_address_2();
+			$shipping_city       = $old_wc ? $order->billing_city       : $order->get_billing_city();
+			$shipping_state      = $old_wc ? $order->billing_state      : $order->get_billing_state();
+			$shipping_postcode   = $old_wc ? $order->billing_postcode   : $order->get_billing_postcode();
+			$shipping_country    = $old_wc ? $order->billing_country    : $order->get_billing_country();
+		}
 
 		$shipping_address->setName( $shipping_first_name . ' ' . $shipping_last_name );
 		$shipping_address->setStreet1( $shipping_address_1 );
@@ -686,6 +693,51 @@ class WC_Gateway_PPEC_Client {
 		$details['shipping_address'] = $shipping_address;
 
 		return $details;
+	}
+
+	/**
+	 * Get PayPal shipping address from customer.
+	 *
+	 * @return array Address
+	 */
+	protected function _get_address_from_customer() {
+		$customer = WC()->customer;
+
+		$shipping_address = new PayPal_Address;
+
+		$old_wc = version_compare( WC_VERSION, '3.0', '<' );
+
+		if ( $customer->get_shipping_address() || $customer->get_shipping_address_2() ) {
+			$shipping_first_name = $old_wc ? '' : $customer->get_shipping_first_name();
+			$shipping_last_name  = $old_wc ? '' : $customer->get_shipping_last_name();
+			$shipping_address_1  = $customer->get_shipping_address();
+			$shipping_address_2  = $customer->get_shipping_address_2();
+			$shipping_city       = $customer->get_shipping_city();
+			$shipping_state      = $customer->get_shipping_state();
+			$shipping_postcode   = $customer->get_shipping_postcode();
+			$shipping_country    = $customer->get_shipping_country();
+		} else {
+			// Fallback to billing in case no shipping methods are set. The address returned from PayPal
+			// will be stored in the order as billing.
+			$shipping_first_name = $old_wc ? ''                         : $customer->get_billing_first_name();
+			$shipping_last_name  = $old_wc ? ''                         : $customer->get_billing_last_name();
+			$shipping_address_1  = $old_wc ? $customer->get_address()   : $customer->get_billing_address_1();
+			$shipping_address_2  = $old_wc ? $customer->get_address_2() : $customer->get_billing_address_2();
+			$shipping_city       = $old_wc ? $customer->get_city()      : $customer->get_billing_city();
+			$shipping_state      = $old_wc ? $customer->get_state()     : $customer->get_billing_state();
+			$shipping_postcode   = $old_wc ? $customer->get_postcode()  : $customer->get_billing_postcode();
+			$shipping_country    = $old_wc ? $customer->get_country()   : $customer->get_billing_country();
+		}
+
+		$shipping_address->setName( $shipping_first_name . ' ' . $shipping_last_name );
+		$shipping_address->setStreet1( $shipping_address_1 );
+		$shipping_address->setStreet2( $shipping_address_2 );
+		$shipping_address->setCity( $shipping_city );
+		$shipping_address->setState( $shipping_state );
+		$shipping_address->setZip( $shipping_postcode );
+		$shipping_address->setCountry( $shipping_country );
+
+		return $shipping_address;
 	}
 
 	/**
@@ -786,13 +838,14 @@ class WC_Gateway_PPEC_Client {
 	 * @return array Params for DoExpressCheckoutPayment call
 	 */
 	public function get_do_express_checkout_params( array $args ) {
-		$settings  = wc_gateway_ppec()->settings;
-		$order     = wc_get_order( $args['order_id'] );
+		$settings     = wc_gateway_ppec()->settings;
+		$order        = wc_get_order( $args['order_id'] );
 
-		$old_wc    = version_compare( WC_VERSION, '3.0', '<' );
-		$order_id  = $old_wc ? $order->id : $order->get_id();
-		$details   = $this->_get_details_from_order( $order_id );
-		$order_key = $old_wc ? $order->order_key : $order->get_order_key();
+		$old_wc       = version_compare( WC_VERSION, '3.0', '<' );
+		$order_id     = $old_wc ? $order->id : $order->get_id();
+		$order_number = $order->get_order_number();
+		$details      = $this->_get_details_from_order( $order_id );
+		$order_key    = $old_wc ? $order->order_key : $order->get_order_key();
 
 		$params = array(
 			'TOKEN'                          => $args['token'],
@@ -809,13 +862,14 @@ class WC_Gateway_PPEC_Client {
 			'PAYMENTREQUEST_0_PAYMENTACTION' => $settings->get_paymentaction(),
 			'PAYMENTREQUEST_0_INVNUM'        => $settings->invoice_prefix . $order->get_order_number(),
 			'PAYMENTREQUEST_0_CUSTOM'        => json_encode( array(
-				'order_id'  => $order_id,
-				'order_key' => $order_key,
+				'order_id'     => $order_id,
+				'order_number' => $order_number,
+				'order_key'    => $order_key,
 			) ),
-			'NOSHIPPING'                     => WC()->cart->needs_shipping() ? 0 : 1,
+			'NOSHIPPING'                     => WC_Gateway_PPEC_Plugin::needs_shipping() ? 0 : 1,
 		);
 
-		if ( WC()->cart->needs_shipping() && ! empty( $details['shipping_address'] ) ) {
+		if ( WC_Gateway_PPEC_Plugin::needs_shipping() && ! empty( $details['shipping_address'] ) ) {
 			$params = array_merge(
 				$params,
 				$details['shipping_address']->getAddressParams( 'PAYMENTREQUEST_0_SHIPTO' )

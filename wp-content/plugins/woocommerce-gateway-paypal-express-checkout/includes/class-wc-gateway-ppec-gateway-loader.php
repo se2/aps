@@ -19,7 +19,10 @@ class WC_Gateway_PPEC_Gateway_Loader {
 		require_once( $includes_path . 'abstracts/abstract-wc-gateway-ppec.php' );
 
 		require_once( $includes_path . 'class-wc-gateway-ppec-with-paypal.php' );
+		require_once( $includes_path . 'class-wc-gateway-ppec-with-paypal-credit.php' );
 		require_once( $includes_path . 'class-wc-gateway-ppec-with-paypal-addons.php' );
+		require_once( $includes_path . 'class-wc-gateway-ppec-with-spb.php' );
+		require_once( $includes_path . 'class-wc-gateway-ppec-with-spb-addons.php' );
 
 		add_filter( 'woocommerce_payment_gateways', array( $this, 'payment_gateways' ) );
 	}
@@ -32,10 +35,25 @@ class WC_Gateway_PPEC_Gateway_Loader {
 	 * @return array Payment methods
 	 */
 	public function payment_gateways( $methods ) {
+		$settings = wc_gateway_ppec()->settings;
+
+		if ( 'yes' === $settings->use_spb ) {
+			if ( $this->can_use_addons() ) {
+				$methods[] = 'WC_Gateway_PPEC_With_SPB_Addons';
+			} else {
+				$methods[] = 'WC_Gateway_PPEC_With_SPB';
+			}
+			return $methods;
+		}
+
 		if ( $this->can_use_addons() ) {
 			$methods[] = 'WC_Gateway_PPEC_With_PayPal_Addons';
 		} else {
 			$methods[] = 'WC_Gateway_PPEC_With_PayPal';
+		}
+
+		if ( $settings->is_credit_enabled() ) {
+			$methods[] = 'WC_Gateway_PPEC_With_PayPal_Credit';
 		}
 
 		return $methods;

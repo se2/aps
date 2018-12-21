@@ -1,9 +1,9 @@
-=== Plugin Name ===
+=== Custom Taxonomy Order ===
 Contributors: mpol
-Tags: order, ordering, sorting, terms, term order, term ordering, terms order, terms ordering, categories, category order, category ordering, categories order, categories ordering, custom taxonomies, taxonomy order, taxonomy ordering, taxonomies order, taxonomies ordering
+Tags: term order, category order, taxonomy order, order
 Requires at least: 3.7
-Tested up to: 4.7
-Stable tag: 2.8.3
+Tested up to: 5.0
+Stable tag: 2.10.0
 License: GPLv2 or later
 
 
@@ -11,7 +11,7 @@ Allows for the ordering of categories and custom taxonomy terms through a simple
 
 == Description ==
 
-Custom Taxonomy Order New Edition is a plugin for WordPress which allows for the ordering of taxonomy terms.
+Custom Taxonomy Order is a plugin for WordPress which allows for the ordering of taxonomy terms.
 
 It supports the following features:
 
@@ -24,8 +24,6 @@ It supports the following features:
 * Translated or translatable.
 * Custom functions to order the taxonomies themselves.
 * There is no Pro version, everything works in the Free version.
-
-It is a continuation (or fork) of Custom Taxonomy Order, which has been discontinued.
 
 
 == Installation ==
@@ -85,6 +83,11 @@ If it is a custom taxonomy, you can also use a filter:
 There is a bug with the the_tags function, where it will sort according to the setting for categories.
 This happens in the 'customtaxorder_apply_order_filter' function where the $args has two taxonomies but only one orderby can be returned.
 
+= I use WooCommerce Attributes. =
+
+This plugin only supports sorting the attributes/terms. These are the items like S, M and L.
+For sorting the taxonomies like 'size', you need to sort them on Woo's attributes page.
+
 = What capabilities are needed? =
 
 For sorting the terms you need the manage_categories capability.
@@ -107,14 +110,27 @@ The function requires a parameter with an array of taxonomy objects.
 
 = Is there an API? =
 
-There is an action that you can use with add_action. It is being run when saving the order of terms in the admin page.
+There are actions that you can use with add_action.
+
+'customtaxorder_update_order' is being run when saving the order of terms in the admin page.
 You could add the following example to your functions.php and work from there.
 
 	<?php
-	function custom_action($new_order) {
-		print_r($new_order);
+	function custom_action( $new_order ) {
+		print_r( $new_order );
 	}
 	add_action('customtaxorder_update_order', 'custom_action');
+	?>
+
+'customtaxorder_terms_ordered' is being run after term array has been ordered with usort.
+Please be aware that this can be triggered multiple times during a request.
+You could add the following example to your functions.php and work from there.
+
+	<?php
+	function custom_action( $terms_new_order, $terms_old_order ) {
+		print_r( $terms_new_order );
+	}
+	add_action('customtaxorder_terms_ordered', 'custom_action', 10, 2);
 	?>
 
 = How can I add my own translation? =
@@ -131,6 +147,37 @@ The WordPress menu completely left lists the different taxonomies.
 The left metabox lists the toplevel terms. Right (or below) are the sub-terms.
 
 == Changelog ==
+
+= 2.10.0 =
+* 2018-10-17
+* Sort attributes for WooCommerce automatically.
+* Show name and label of taxonomy in the lists.
+
+= 2.9.5 =
+* 2018-09-07
+* Add support for Dark Mode beta plugin.
+
+= 2.9.4 =
+* 2018-07-02
+* Add action 'customtaxorder_terms_ordered'.
+
+= 2.9.3 =
+* 2018-02-16
+* Sort terms with numeric values correctly (thanks empiresafe).
+
+= 2.9.2 =
+* 2017-11-30
+* Add action 'custom_taxonomy_order_ne_settings_buttons' to settings page.
+
+= 2.9.1 =
+* 2017-08-04
+* Set Woo attribute terms to public.
+
+= 2.9.0 =
+* 2017-07-10
+* Drop support for attributes in WooCommerce (deprecated).
+* Use the correct number of parameters with add_filter calls.
+* Set default order in WP_Term_Query->get_terms() according to our settings (probably WP 4.9).
 
 = 2.8.3 =
 * 2017-03-29

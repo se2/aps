@@ -58,3 +58,16 @@ Plugin URI: http://timelord.nl/
 	margin: 3px auto;
 	height: 30px;
 }
+
+/* Dark Mode */
+.dark-mode .customtaxorder h2.widget-top,
+.dark-mode .customtaxorder .widget h2.widget-top {
+	border: 1px solid #191f25;
+	background-color: #32373c;
+	color: #bbc8dd;
+}
+.dark-mode .customtaxorder li.lineitem {
+	border: 1px solid #191f25;
+	background-color: #32373c;
+	color: #bbc8dd;
+}

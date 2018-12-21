@@ -53,8 +53,8 @@ function custom_taxonomy_order() {
 							<ul id="custom-taxonomy-list">
 								<?php
 								foreach ( $taxonomies_ordered as $taxonomy ) { ?>
-									<li id="<?php echo $taxonomy->name; ?>" class="lineitem"><?php echo $taxonomy->name; ?></li>
-									<?php
+									<li id="<?php echo $taxonomy->name; ?>" class="lineitem"><?php echo  $taxonomy->label . ' &nbsp;(' . $taxonomy->name . ')';?></li>
+								<?php
 								} ?>
 							</ul>
 						</div>
@@ -115,7 +115,7 @@ function customtaxorder_update_taxonomies() {
  *
  * Returns: array with list of taxonomies, ordered correctly.
  *
- * Since: 2.7.0
+ * @since: 2.7.0
  *
  */
 function customtaxorder_sort_taxonomies( $taxonomies = array() ) {
@@ -145,37 +145,28 @@ function customtaxorder_sort_taxonomies( $taxonomies = array() ) {
 
 
 /*
- * Same as customtaxorder_sort_taxonomies, but for WooCommerce.
+ * Sort the taxonomies for WooCommerce
  *
- * Parameter: $taxonomies, array with a list of taxonomy arrays.
+ * Parameter: $taxonomies, array with a list of taxonomy objects of WC_Product_Attribute.
  *
  * Returns: array with list of taxonomies, ordered correctly.
  *
- * Since: 2.7.0
+ * @since: 2.10.0
  *
  */
-function customtaxorder_sort_taxonomies_array( $taxonomies = array() ) {
-	$order = get_option( 'customtaxorder_taxonomies', '' );
-	$order = explode( ",", $order );
-	$taxonomies_woo = array();
-
-	// Main sorted taxonomies.
-	if ( ! empty($order) && is_array($order) && ! empty($taxonomies) && is_array($taxonomies) ) {
-		foreach ( $order as $tax ) {
-			foreach ( $taxonomies as $key => $taxonomy ) {
-	 			if ( is_array( $taxonomy ) && $tax === $taxonomy['name'] ) {
-					$taxonomies_woo[ $taxonomy['name'] ] = $taxonomy;
-					unset( $taxonomies[$taxonomy['name']] );
-				}
+function customtaxorder_sort_woocommerce_taxonomies( $attributes ) {
+	if ( is_array( $attributes ) && ! empty( $attributes ) ) {
+		foreach ( $attributes as $attribute ) {
+			if ( is_object( $attribute ) && is_a( $attribute, 'WC_Product_Attribute' ) ) {
+				// nothing to do
+			} else {
+				return $attributes; // not an attribute we are looking for.
 			}
 		}
+		// We have the correct data.
+		$attributes = customtaxorder_sort_taxonomies( $attributes );
 	}
 
-	// Unsorted taxonomies, the leftovers.
-	foreach ( $taxonomies as $key => $taxonomy ) {
-		$taxonomies_woo[ $key ] = $taxonomy;
-	}
-
-	return $taxonomies_woo;
+	return $attributes;
 }
-add_filter( 'woocommerce_get_product_attributes', 'customtaxorder_sort_taxonomies_array' );
+add_filter( 'woocommerce_product_get_attributes', 'customtaxorder_sort_woocommerce_taxonomies' );

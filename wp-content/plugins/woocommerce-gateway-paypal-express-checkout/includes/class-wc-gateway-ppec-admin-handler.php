@@ -86,7 +86,7 @@ class WC_Gateway_PPEC_Admin_Handler {
 
 	/**
 	 * Prevent PPEC Credit showing up in the admin, because it shares its settings
-	 * with the PayPal Express Checkout class.
+	 * with the PayPal Checkout class.
 	 *
 	 * @param array $sections List of sections in checkout
 	 *
@@ -152,7 +152,7 @@ class WC_Gateway_PPEC_Admin_Handler {
 		$payment_method = $old_wc ? $order->payment_method : $order->get_payment_method();
 		if ( 'ppec_paypal' === $payment_method ) {
 
-			$trans_id = $old_wc ? get_post_meta( $order_id, '_transaction_id', true ) : $order->get_meta( '_transaction_id', true );
+			$trans_id = get_post_meta( $order_id, '_transaction_id', true );
 			$trans_details = wc_gateway_ppec()->client->get_transaction_details( array( 'TRANSACTIONID' => $trans_id ) );
 
 			if ( $trans_id && $this->is_authorized_only( $trans_details ) ) {
@@ -167,7 +167,13 @@ class WC_Gateway_PPEC_Admin_Handler {
 				if ( is_wp_error( $result ) ) {
 					$order->add_order_note( __( 'Unable to capture charge!', 'woocommerce-gateway-paypal-express-checkout' ) . ' ' . $result->get_error_message() );
 				} else {
-					$order->add_order_note( sprintf( __( 'PayPal Express Checkout charge complete (Charge ID: %s)', 'woocommerce-gateway-paypal-express-checkout' ), $trans_id ) );
+					update_post_meta( $order_id, '_paypal_status', ! empty( $trans_details['PAYMENTSTATUS'] ) ? $trans_details['PAYMENTSTATUS'] : 'completed' );
+
+					if ( ! empty( $result['TRANSACTIONID'] ) ) {
+						update_post_meta( $order_id, '_transaction_id', $result['TRANSACTIONID'] );
+					}
+
+					$order->add_order_note( sprintf( __( 'PayPal Checkout charge complete (Charge ID: %s)', 'woocommerce-gateway-paypal-express-checkout' ), $trans_id ) );
 				}
 			}
 		}
@@ -200,7 +206,7 @@ class WC_Gateway_PPEC_Admin_Handler {
 
 		if ( 'ppec_paypal' === $payment_method ) {
 
-			$trans_id = $old_wc ? get_post_meta( $order_id, '_transaction_id', true ) : $order->get_meta( '_transaction_id', true );
+			$trans_id = get_post_meta( $order_id, '_transaction_id', true );
 			$trans_details = wc_gateway_ppec()->client->get_transaction_details( array( 'TRANSACTIONID' => $trans_id ) );
 
 			if ( $trans_id && $this->is_authorized_only( $trans_details ) ) {
@@ -211,7 +217,7 @@ class WC_Gateway_PPEC_Admin_Handler {
 				if ( is_wp_error( $result ) ) {
 					$order->add_order_note( __( 'Unable to void charge!', 'woocommerce-gateway-paypal-express-checkout' ) . ' ' . $result->get_error_message() );
 				} else {
-					$order->add_order_note( sprintf( __( 'PayPal Express Checkout charge voided (Charge ID: %s)', 'woocommerce-gateway-paypal-express-checkout' ), $trans_id ) );
+					$order->add_order_note( sprintf( __( 'PayPal Checkout charge voided (Charge ID: %s)', 'woocommerce-gateway-paypal-express-checkout' ), $trans_id ) );
 				}
 			}
 		}
