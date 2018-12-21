@@ -1,5 +1,15 @@
 .ff-montserrat {
-	font-family: "Montserrat", serif;
+  font-family: "Montserrat", serif;
+}
+
+.text-black {
+  color: #000;
+}
+
+.site-notice {
+  color: black;
+  font-size: 11px;
+  letter-spacing: 0.05em;
 }
 
 .search-section input {
@@ -42,4 +52,19 @@
   -webkit-border-radius: 100%;
   -moz-border-radius: 100%;
   border-radius: 100%;
+}
+
+ul#nav li.dropdown ul.submenu {
+	background: #fff;
+	text-align: left;
+	position: absolute;
+	left: 0;
+	width: 215px;
+	z-index: 51;
+	padding: 0;
+	margin-bottom: 0;
+	border: 1px solid #c5cacb;
+	border-style: solid;
+	border-top-width: 0;
+    top: 49px;
 }

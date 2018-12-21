@@ -109,7 +109,7 @@ $curLang = defined(ICL_LANGUAGE_CODE) ? ICL_LANGUAGE_CODE : 'en';
 										</form>
 									</div>
 									<p class="free_shipping site-notice text-xs font-bold ff-montserrat">AUS WIDE EXPRESS SHIPPING 💌 SAME DAY MELB SHIPPING AVAILABLE</p>
-									<div class="flex flex-wrap items-center justify-end desktop-8">
+									<div class="flex flex-wrap items-center justify-end desktop-12">
 										<ul id="cart" class="inline-block">
 											<li class="cart-overview">
 												<a href="<?php echo wc_get_cart_url() ?>"><i class="fa fa-shopping-cart"></i> Shopping Cart
