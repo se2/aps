@@ -168,6 +168,8 @@ add_filter('option_users_can_register', function($value) {
 
 add_action('wp_enqueue_scripts', 'vinhgiang_style');
 function vinhgiang_style() {
+	wp_register_style('tailwindcss', 'https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css');
+	wp_enqueue_style('tailwindcss');
 
 	wp_register_style('stylesheet-style', THEME_URL . 'css/stylesheet.css');
 	wp_enqueue_style('stylesheet-style');
@@ -194,7 +196,10 @@ function vinhgiang_style() {
     wp_enqueue_style('josefin-google-font');
 
     wp_register_style('source-google-font', '//fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,300,700');
-    wp_enqueue_style('source-google-font');
+		wp_enqueue_style('source-google-font');
+
+		wp_register_style('custom', THEME_URL . 'css/custom.css');
+    wp_enqueue_style('custom');
 
 	global $wp_styles;
 

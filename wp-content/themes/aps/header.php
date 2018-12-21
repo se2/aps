@@ -75,85 +75,82 @@ $curLang = defined(ICL_LANGUAGE_CODE) ? ICL_LANGUAGE_CODE : 'en';
     <div class="shifter-page">
         <div class="page-wrap">
             <header>
-                <div id="top-bar">
-                    <div class="row">
-                        <div class="desktop-4 tablet-2 mobile-half">
-                            <form action="<?php echo SITE_URL ?>" method="get">
-                                <input type="text" name="s" id="q" placeholder="SEARCH"/>
-                            </form>
-                        </div>
+							<div id="identity" class="row flex flex-wrap justify-between ">
+								<?php
+								if ( get_field( 'logo', 'option' ) ) :
+									$logo = get_field('logo', 'option');
+								?>
+								<div id="logo" class="desktop-4 tablet-3 mobile-3">
+									<a href="<?php echo SITE_URL ?>">
+										<img src="<?php echo $logo['url'] ?>" alt="<?php echo get_bloginfo('name'); ?>" style="border: 0;"/>
+									</a>
+								</div>
+								<?php endif ?>
+								<div class="desktop-8 tablet-3 mobile-3 text-right flex flex-wrap justify-end">
+									<div class="search-section">
+										<p class="text_order inline-block text-xs">Need help? Email us at help@tibbsandbones.com ☺</p>
+										<p class="inline-block px-2">
+											<select id="currencies" name="currencies">
+												<option value="AUD" selected="selected">AUD</option>
+												<option value="GBP">GBP</option>
+												<option value="CAD">CAD</option>
+												<option value="USD">USD</option>
+												<option value="EUR">EUR</option>
+												<option value="BRL">BRL</option>
+												<option value="JPY">JPY</option>
+												<option value="HKD">HKD</option>
+											</select>
+										</p>
+										<form action="<?php echo SITE_URL ?>" method="get" class="inline-block relative">
+											<input type="text" name="s" id="q" placeholder="search"/>
+											<span class="input-group-btn">
+												<button type="submit" class="outline-none btn btn-search"><i class="fa fa-search" aria-hidden="true"></i></button>
+											</span>
+										</form>
+									</div>
+									<p class="free_shipping site-notice text-xs font-bold ff-montserrat">AUS WIDE EXPRESS SHIPPING 💌 SAME DAY MELB SHIPPING AVAILABLE</p>
+									<div class="flex flex-wrap items-center justify-end desktop-8">
+										<ul id="cart" class="inline-block">
+											<li class="cart-overview">
+												<a href="<?php echo wc_get_cart_url() ?>"><i class="fa fa-shopping-cart"></i> Shopping Cart
+													<span class="item_count"><?php echo WC()->cart->get_cart_contents_count() ?></span>
+												</a>
+											</li>
+										</ul>
+										<ul id="social-links" class="inline-block list-reset">
+											<?php if( get_field( 'facebook', 'option' ) ): ?>
+											<li>
+												<a href="<?php the_field( 'facebook', 'option' ) ?>" target="_blank"><i class="fa fa-facebook"></i></a>
+											</li>
+											<?php endif ?>
 
-                        <!--<div class="desktop-4 tablet-2 mobile-half">
-                            Show ya GTM ticket in store for 10% OFF!
-                        </div>-->
+											<?php if( get_field( 'twitter', 'option' ) ): ?>
+											<li>
+												<a href="<?php the_field( 'twitter', 'option' ) ?>" target="_blank"><i class="fa fa-twitter"></i></a>
+											</li>
+											<?php endif ?>
 
-                        <ul id="cart" class="desktop-4 tablet-2 mobile-3">
-                            <!--<li>
-                                <a href="account/login.html">ACCOUNT <i class="fa fa-user"></i></a>
-                            </li>
-                            <li>
-                                <select id="currencies" name="currencies">
-                                    <option value="AUD" selected="selected">AUD</option>
-                                    <option value="GBP">GBP</option>
-                                    <option value="CAD">CAD</option>
-                                    <option value="USD">USD</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="BRL">BRL</option>
-                                    <option value="JPY">JPY</option>
-                                    <option value="HKD">HKD</option>
-                                </select>
-                            </li>-->
-                            <li class="cart-overview">
-                                <a href="<?php echo wc_get_cart_url() ?>">CART <i class="fa fa-shopping-cart"></i>
-                                    <span class="item_count"><?php echo WC()->cart->get_cart_contents_count() ?></span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="clear"></div>
-                <div id="identity" class="row">
-                    <?php if( get_field( 'logo', 'option' ) ): ?>
-                        <?php $logo = get_field('logo', 'option') ?>
-                        <div id="logo" class="desktop-4 desktop-push-4 tablet-3 mobile-3">
-                            <a href="<?php echo SITE_URL ?>">
-                                <img src="<?php echo $logo['url'] ?>" alt="<?php echo get_bloginfo('name'); ?>" style="border: 0;"/>
-                            </a>
-                        </div>
-                    <?php endif ?>
+											<?php if( get_field( 'pinterest', 'option' ) ): ?>
+											<li>
+												<a href="<?php the_field( 'pinterest', 'option' ) ?>" target="_blank"><i class="fa fa-pinterest"></i></a>
+											</li>
+											<?php endif ?>
 
-                    <ul id="social-links" class="desktop-4 tablet-3 mobile-3">
-                        <?php if( get_field( 'facebook', 'option' ) ): ?>
-                        <li>
-                            <a href="<?php the_field( 'facebook', 'option' ) ?>" target="_blank"><i class="fa fa-facebook"></i></a>
-                        </li>
-                        <?php endif ?>
+											<?php if( get_field( 'tumblr', 'option' ) ): ?>
+											<li>
+												<a href="<?php the_field( 'tumblr', 'option' ) ?>" target="_blank"><i class="fa fa-tumblr"></i></a>
+											</li>
+											<?php endif ?>
 
-                        <?php if( get_field( 'twitter', 'option' ) ): ?>
-                        <li>
-                            <a href="<?php the_field( 'twitter', 'option' ) ?>" target="_blank"><i class="fa fa-twitter"></i></a>
-                        </li>
-                        <?php endif ?>
-
-                        <?php if( get_field( 'pinterest', 'option' ) ): ?>
-                        <li>
-                            <a href="<?php the_field( 'pinterest', 'option' ) ?>" target="_blank"><i class="fa fa-pinterest"></i></a>
-                        </li>
-                        <?php endif ?>
-
-                        <?php if( get_field( 'tumblr', 'option' ) ): ?>
-                        <li>
-                            <a href="<?php the_field( 'tumblr', 'option' ) ?>" target="_blank"><i class="fa fa-tumblr"></i></a>
-                        </li>
-                        <?php endif ?>
-
-                        <?php if( get_field( 'instagram', 'option' ) ): ?>
-                        <li>
-                            <a href="<?php the_field( 'instagram', 'option' ) ?>" target="_blank"><i class="fa fa-instagram"></i></a>
-                        </li>
-                        <?php endif ?>
-                    </ul>
-                </div>
+											<?php if( get_field( 'instagram', 'option' ) ): ?>
+											<li>
+												<a href="<?php the_field( 'instagram', 'option' ) ?>" target="_blank"><i class="fa fa-instagram"></i></a>
+											</li>
+											<?php endif ?>
+										</ul>
+									</div>
+								</div>
+							</div>
             </header>
 
             <nav id="nav" role="navigation">
