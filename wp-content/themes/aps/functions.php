@@ -183,23 +183,23 @@ function vinhgiang_style() {
 	wp_register_style('additional-checkout-buttons-style', THEME_URL . 'css/additional-checkout-buttons.css');
 	wp_enqueue_style('additional-checkout-buttons-style');
 
-    wp_register_style('lato-google-font', '//fonts.googleapis.com/css?family=Lato:300,400,700');
-    wp_enqueue_style('lato-google-font');
+	wp_register_style('lato-google-font', '//fonts.googleapis.com/css?family=Lato:300,400,700');
+	wp_enqueue_style('lato-google-font');
 
-    wp_register_style('montserrat-google-font', '//fonts.googleapis.com/css?family=Montserrat:400,700');
-    wp_enqueue_style('montserrat-google-font');
+	wp_register_style('montserrat-google-font', '//fonts.googleapis.com/css?family=Montserrat:400,700');
+	wp_enqueue_style('montserrat-google-font');
 
-    wp_register_style('roboto-google-font', '//fonts.googleapis.com/css?family=Roboto:400,500,300');
-    wp_enqueue_style('roboto-google-font');
+	wp_register_style('roboto-google-font', '//fonts.googleapis.com/css?family=Roboto:400,500,300');
+	wp_enqueue_style('roboto-google-font');
 
-    wp_register_style('josefin-google-font', '//fonts.googleapis.com/css?family=Josefin+Sans:400,600,700,300');
-    wp_enqueue_style('josefin-google-font');
+	wp_register_style('josefin-google-font', '//fonts.googleapis.com/css?family=Josefin+Sans:400,600,700,300');
+	wp_enqueue_style('josefin-google-font');
 
-    wp_register_style('source-google-font', '//fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,300,700');
-		wp_enqueue_style('source-google-font');
+	wp_register_style('source-google-font', '//fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,300,700');
+	wp_enqueue_style('source-google-font');
 
-		wp_register_style('custom', THEME_URL . 'css/custom.css');
-    wp_enqueue_style('custom');
+	wp_register_style('custom', THEME_URL . 'css/custom.css');
+	wp_enqueue_style('custom');
 
 	global $wp_styles;
 

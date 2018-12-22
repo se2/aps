@@ -36,7 +36,10 @@ $curLang = defined(ICL_LANGUAGE_CODE) ? ICL_LANGUAGE_CODE : 'en';
         <link href="<?php echo $favicon['url'] ?>" rel="icon" type="image/png" />
     <?php endif ?>
 
-    <?php wp_head() ?>
+		<!-- FontAwesome 5.6.3 -->
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+
+		<?php wp_head() ?>
 
     <script>
         var site_url = '<?php echo SITE_URL ?>';

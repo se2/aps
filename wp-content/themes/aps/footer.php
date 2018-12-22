@@ -2,137 +2,154 @@
 global $menuInfo, $staticContentMeta;
 
 ?>
-    <div id="newsletter">
-        <div class="row">
 
-            <?php if( get_field('display_subscription_form', 'option') ): ?>
-                <label class="desktop-4 tablet-2 mobile-3"><?php the_field('subscription_description', 'option') ?></label>
-                <?php if( get_field('mailchimp_form_url', 'option') ) : ?>
-                    <div id="signup" class="desktop-4 tablet-2 mobile-3">
-                        <form action="<?php the_field('mailchimp_form_url', 'option' ) ?>" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank">
-                            <input value="" name="EMAIL" class="email" id="mce-EMAIL" placeholder="email@example.com" required="" type="email">
-                            <input value="Join" name="subscribe" id="mc-embedded-subscribe" class="small button" type="submit">
-                        </form>
-                    </div>
-                <?php endif ?>
-            <?php endif ?>
+	<footer class="site-footer">
+		<div class="row footer-top flex flex-wrap">
+			<div class="w-full md:w-1/2 lg:w-1/5">
+				<?php $menuName = get_menu_name_by_location( 'secondary' ); ?>
+				<h3>
+					<span><?php echo $menuName; ?></span>
+				</h3>
+				<ul>
+					<?php $footer1 = wp_get_nav_menu_items($menuName); ?>
+					<?php foreach( $footer1 as $item) : ?>
+						<?php $target = $item->type == 'custom' ? '_blank' : ''; ?>
+						<li><a target="<?php echo $target ?>" href="<?php echo $item->url ?>" title=""><?php echo $item->title ?></a></li>
+					<?php endforeach ?>
+				</ul>
+			</div>
+			<div class="w-full md:w-1/2 lg:w-1/5">
+				<?php $menuName = get_menu_name_by_location('tertiary') ?>
+				<h3>
+					<span><?php echo $menuName; ?></span>
+				</h3>
+				<ul>
+					<?php $footer1 = wp_get_nav_menu_items($menuName); ?>
+					<?php foreach( $footer1 as $item) : ?>
+						<?php $target = $item->type == 'custom' ? '_blank' : ''; ?>
+						<li><a target="<?php echo $target ?>" href="<?php echo $item->url ?>" title=""><?php echo $item->title ?></a></li>
+					<?php endforeach ?>
+				</ul>
+			</div>
+			<div class="w-full md:w-1/2 lg:w-1/5">
+				<h3>
+					<span>Contact us</span>
+				</h3>
+				<ul>
+					<?php if ( have_rows( 'contact_email_list', 'option' ) ) : ?>
+					<li class="pb-2">
+						<label class="text-white">Email</label>
+						<?php while( have_rows('contact_email_list', 'option') ) : the_row() ?>
+						<a href="mailto:<?php the_sub_field('contact_email') ?>"><?php the_sub_field('contact_email') ?></a>
+						<br>
+						<?php endwhile ?>
+					</li>
+					<?php endif ?>
 
-            <ul id="social-icons" class="desktop-4 tablet-2 mobile-3">
-                <?php if( get_field( 'facebook', 'option' ) ): ?>
-                <li>
-                    <a href="<?php the_field( 'facebook', 'option' ) ?>" target="_blank"><i class="fa fa-facebook fa-2x"></i></a>
-                </li>
-                <?php endif ?>
+					<?php if ( have_rows( 'contact_phone_list', 'option' ) ) : ?>
+					<li class="pb-2">
+						<label class="text-white">Phone</label>
+						<?php while( have_rows('contact_phone_list', 'option') ) : the_row() ?>
+						<a href="tel:<?php echo str_replace(' ', '', get_sub_field('contact_phone')) ?>"><?php the_sub_field('contact_phone') ?></a>
+						<br>
+						<?php endwhile ?>
+					</li>
+					<?php endif ?>
 
-                <?php if( get_field( 'twitter', 'option' ) ): ?>
-                <li>
-                    <a href="<?php the_field( 'twitter', 'option' ) ?>" target="_blank"><i class="fa fa-twitter fa-2x"></i></a>
-                </li>
-                <?php endif ?>
+					<?php if ( have_rows( 'contact_address_list', 'option' ) ) : ?>
+					<li class="pb-2">
+						<label class="text-white">Address</label>
+						<?php while( have_rows('contact_address_list', 'option') ) : the_row() ?>
+						<p class="text-white"><?php the_sub_field('contact_address') ?></p>
+						<?php endwhile ?>
+					</li>
+					<?php endif ?>
+				</ul>
+		</div>
+			<div class="w-full md:w-1/2 lg:w-2/5 footer-social">
+				<h3>
+					<span>STAY CONNECTED</span>
+				</h3>
+				<ul class="social-icons" id="social-icons">
+					<?php if ( get_field( 'facebook', 'option' ) ) : ?>
+					<li>
+						<a href="<?php the_field( 'facebook', 'option' ); ?>" target="_blank">
+							<i class="fa fa-facebook fa-lg"></i>
+						</a>
+					</li>
+					<?php endif; ?>
+					<?php if ( get_field( 'twitter', 'option' ) ) : ?>
+					<li>
+						<a href="<?php the_field( 'twitter', 'option' ); ?>" target="_blank">
+							<i class="fab fa-twitter fa-lg"></i>
+						</a>
+					</li>
+					<?php endif; ?>
+					<?php if ( get_field( 'pinterest', 'option' ) ) : ?>
+					<li>
+						<a href="<?php the_field( 'pinterest', 'option' ); ?>" target="_blank">
+							<i class="fab fa-pinterest-p fa-lg"></i>
+						</a>
+					</li>
+					<?php endif; ?>
+					<?php if ( get_field( 'tumblr', 'option' ) ) : ?>
+					<li>
+						<a href="<?php the_field( 'tumblr', 'option' ); ?>" target="_blank">
+							<i class="fab fa-tumblr fa-lg"></i>
+						</a>
+					</li>
+					<?php endif; ?>
+					<?php if ( get_field( 'instagram', 'option' ) ) : ?>
+					<li>
+						<a href="<?php the_field( 'instagram', 'option' ); ?>" target="_blank">
+							<i class="fab fa-instagram fa-lg"></i>
+						</a>
+					</li>
+					<?php endif; ?>
+				</ul>
+				<div class="footer-newsletter">
+					<h3><span><?php the_field('subscription_description', 'option') ?> 😍🌈💫</span></h3>
+					<section class="newsletter">
+						<?php
+						if ( get_field( 'display_subscription_form', 'option' ) ) :
+							if ( get_field( 'mailchimp_form_url', 'option' ) ) :
+						?>
+						<div id="signup" class="w-full newsletter">
+							<form action="<?php the_field( 'mailchimp_form_url', 'option' ); ?>" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate input-group" target="_blank">
+								<input value="" name="EMAIL" class="email inline-block input-group-field" id="mce-EMAIL" placeholder="email@example.com" required="" type="email">
+								<span class="input-group-btn">
+									<input value="Join" name="subscribe" id="mc-embedded-subscribe" class="small btn inline-block" type="submit">
+								</span>
+							</form>
+						</div>
+						<?php
+							endif;
+						endif;
+						?>
+					</section>
+				</div>
+			</div>
+		</div>
+		<div class="flex flex-wrap row justify-start footer-bottom">
+			<div class="w-full">
+				<address>© <?php echo date('Y') ?> <?php echo get_bloginfo('name'); ?>. All Rights Reserved.</address>
+				<?php
+				if ( have_rows( 'payment_gateway_list', 'option' ) ) :
+					while ( have_rows( 'payment_gateway_list', 'option' ) ) :
+						the_row();
+						$logo = get_sub_field( 'payment_gateway_logo' );
+				?>
+				<img class="payment" src="<?php echo $logo['url'] ?>"/>
+				<?php
+					endwhile;
+				?>
+				<div class="clear"></div>
+				<?php endif; ?>
+			</div>
+		</div>
+	</footer>
 
-                <?php if( get_field( 'pinterest', 'option' ) ): ?>
-                <li>
-                    <a href="<?php the_field( 'pinterest', 'option' ) ?>" target="_blank"><i class="fa fa-pinterest fa-2x"></i></a>
-                </li>
-                <?php endif ?>
-
-                <?php if( get_field( 'tumblr', 'option' ) ): ?>
-                <li>
-                    <a href="<?php the_field( 'tumblr', 'option' ) ?>" target="_blank"><i class="fa fa-tumblr fa-2x"></i></a>
-                </li>
-                <?php endif ?>
-
-                <?php if( get_field( 'instagram', 'option' ) ): ?>
-                <li>
-                    <a href="<?php the_field( 'instagram', 'option' ) ?>" target="_blank"><i class="fa fa-instagram fa-2x"></i></a>
-                </li>
-                <?php endif ?>
-            </ul>
-        </div>
-    </div>
-
-    <footer>
-        <div class="row">
-            <div class="desktop-3 tablet-fourth mobile-3">
-                <div class="section-title">
-                    <h4>Contact us</h4>
-                </div>
-                <ul>
-                    <?php if( have_rows('contact_email_list', 'option') ): ?>
-                        <li>
-                            <label>Email</label>
-                            <?php while( have_rows('contact_email_list', 'option') ) : the_row() ?>
-                                <a href="mailto:<?php the_sub_field('contact_email') ?>"><?php the_sub_field('contact_email') ?></a>
-                                <br>
-                            <?php endwhile ?>
-                        </li>
-                    <?php endif ?>
-
-                    <?php if( have_rows('contact_phone_list', 'option') ): ?>
-                        <li>
-                            <label>Phone</label>
-                            <?php while( have_rows('contact_phone_list', 'option') ) : the_row() ?>
-                                <a href="tel:<?php echo str_replace(' ', '', get_sub_field('contact_phone')) ?>"><?php the_sub_field('contact_phone') ?></a>
-                                <br>
-                            <?php endwhile ?>
-                        </li>
-                    <?php endif ?>
-
-                    <?php if( have_rows('contact_address_list', 'option') ): ?>
-                    <li>
-                        <label>Address</label>
-                        <?php while( have_rows('contact_address_list', 'option') ) : the_row() ?>
-                            <p><?php the_sub_field('contact_address') ?></p>
-                        <?php endwhile ?>
-                    </li>
-                    <?php endif ?>
-                </ul>
-            </div>
-            <div class="desktop-3 tablet-fourth mobile-3">
-                <?php $menuName = get_menu_name_by_location('secondary') ?>
-                <div class="section-title">
-                    <h4><?php echo $menuName ?></h4>
-                </div>
-                <ul>
-                    <?php $footer1 = wp_get_nav_menu_items($menuName); ?>
-                    <?php foreach( $footer1 as $item) : ?>
-                        <?php $target = $item->type == 'custom' ? '_blank' : ''; ?>
-                        <li><a target="<?php echo $target ?>" href="<?php echo $item->url ?>" title=""><?php echo $item->title ?></a></li>
-                    <?php endforeach ?>
-                </ul>
-            </div>
-            <div class="desktop-3 tablet-fourth mobile-3">
-                <?php $menuName = get_menu_name_by_location('tertiary') ?>
-                <div class="section-title">
-                    <h4><?php echo $menuName ?></h4>
-                </div>
-                <ul>
-                    <?php $footer1 = wp_get_nav_menu_items($menuName); ?>
-                    <?php foreach( $footer1 as $item) : ?>
-                        <?php $target = $item->type == 'custom' ? '_blank' : ''; ?>
-                        <li><a target="<?php echo $target ?>" href="<?php echo $item->url ?>" title=""><?php echo $item->title ?></a></li>
-                    <?php endforeach ?>
-                </ul>
-            </div>
-            <div class="desktop-3 tablet-fourth mobile-3">
-                <?php if( have_rows('payment_gateway_list', 'option') ): ?>
-                    <?php if( get_field( 'payment_title', 'option' ) ): ?>
-                    <div class="section-title">
-                        <h4><?php the_field('payment_title', 'option' ) ?></h4>
-                    </div>
-                    <?php endif; ?>
-
-                    <?php while( have_rows('payment_gateway_list', 'option' ) ) : the_row(); ?>
-                        <?php $logo = get_sub_field('payment_gateway_logo'); ?>
-                        <img src="<?php echo $logo['url'] ?>"/>
-                    <?php endwhile ?>
-                    <div class="clear"></div>
-                <?php endif; ?>
-                <small>Copyright &copy; <?php echo date('Y') ?> <a href="<?php echo SITE_URL ?>" title=""><?php echo get_bloginfo('name'); ?></a><br/></small>
-            </div>
-        </div>
-    </footer>
-</div>
+</div><!-- .page-wrap -->
 <nav class="shifter-navigation">
     <li class="search">
         <form action="" method="get">
