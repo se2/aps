@@ -43,6 +43,25 @@
             "disabled": 0
         },
         {
+            "key": "field_5c1e87e8d3011",
+            "label": "Instagram Description",
+            "name": "instagram_description",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": ""
+        },
+        {
             "key": "field_591293ec7f61c",
             "label": "User ID",
             "name": "user_id",
@@ -90,7 +109,7 @@
             }
         ]
     ],
-    "menu_order": 0,
+    "menu_order": 20,
     "position": "normal",
     "style": "default",
     "label_placement": "top",
@@ -98,5 +117,5 @@
     "hide_on_screen": "",
     "active": 1,
     "description": "",
-    "modified": 1545349768
+    "modified": 1545504927
 }

@@ -104,7 +104,7 @@ h6 {
 
 @media screen and (min-width: 980px) {
   .gridlock .row {
-    width: 960px;
+    width: 980px;
   }
 }
 
@@ -1783,11 +1783,11 @@ ul#nav li a {
   font-family: "Montserrat", serif;
   font-size: 12px;
   line-height: 20px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   margin: 16px 18px 12px;
   padding: 0;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.6px;
   color: #ffffff;
   display: block;
 }
