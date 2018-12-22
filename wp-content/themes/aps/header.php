@@ -53,26 +53,26 @@ $curLang = defined(ICL_LANGUAGE_CODE) ? ICL_LANGUAGE_CODE : 'en';
 <body class="gridlock shifter index">
 
     <div id="mobile-only">
-        <div class="row">
-            <ul id="mobile-menu" class="mobile-3">
-                <li><a href="<?php echo SITE_URL ?>"><i class="fa fa-home"></i></a></li>
-                <!--<li><a href="account/login.html"><i class="fa fa-user"></i></a></li>
-                <li class="curr">
-                    <select id="currencies" name="currencies">
-                        <option value="AUD" selected="selected">AUD</option>
-                        <option value="GBP">GBP</option>
-                        <option value="CAD">CAD</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="BRL">BRL</option>
-                        <option value="JPY">JPY</option>
-                        <option value="HKD">HKD</option>
-                    </select>
-                </li>-->
-                <li><a href="<?php echo wc_get_cart_url() ?>"><i class="fa fa-shopping-cart"></i> <span class="item_count"><?php echo WC()->cart->get_cart_contents_count() ?></span></a></li>
-                <li class="shifter-handle"></li>
-            </ul>
-        </div>
+			<div class="row">
+				<ul id="mobile-menu" class="mobile-3">
+					<li><a href="<?php echo SITE_URL ?>"><i class="fa fa-home"></i></a></li>
+					<li><a href="account/login.html"><i class="fa fa-user"></i></a></li>
+					<li class="curr">
+							<select id="currencies" name="currencies">
+									<option value="AUD" selected="selected">AUD</option>
+									<option value="GBP">GBP</option>
+									<option value="CAD">CAD</option>
+									<option value="USD">USD</option>
+									<option value="EUR">EUR</option>
+									<option value="BRL">BRL</option>
+									<option value="JPY">JPY</option>
+									<option value="HKD">HKD</option>
+							</select>
+					</li>
+					<li><a href="<?php echo wc_get_cart_url() ?>"><i class="fa fa-shopping-cart"></i> <span class="item_count"><?php echo WC()->cart->get_cart_contents_count() ?></span></a></li>
+					<li class="shifter-handle"></li>
+				</ul>
+			</div>
     </div>
 
     <div class="shifter-page">
@@ -84,15 +84,15 @@ $curLang = defined(ICL_LANGUAGE_CODE) ? ICL_LANGUAGE_CODE : 'en';
 									$logo = get_field('logo', 'option');
 								?>
 								<div id="logo" class="desktop-4 tablet-3 mobile-3">
-									<a href="<?php echo SITE_URL ?>">
+									<a href="<?php echo SITE_URL ?>" class="block overflow-auto">
 										<img src="<?php echo $logo['url'] ?>" alt="<?php echo get_bloginfo('name'); ?>" style="border: 0;"/>
 									</a>
 								</div>
 								<?php endif ?>
-								<div class="desktop-8 tablet-3 mobile-3 text-right flex flex-wrap justify-end">
+								<div id="header-info" class="desktop-8 tablet-3 mobile-3 flex flex-wrap justify-center lg:justify-end text-center lg:text-right">
 									<div class="search-section">
-										<p class="text_order inline-block text-xs">Need help? Email us at help@tibbsandbones.com ☺</p>
-										<p class="inline-block px-2">
+										<p class="text_order inline-block text-xs">Need help? Email us at <?php echo get_field( 'contact_email_list', 'option' )[0]['contact_email']; ?> ☺</p>
+										<p class="px-2 hidden md:inline-block">
 											<select id="currencies" name="currencies">
 												<option value="AUD" selected="selected">AUD</option>
 												<option value="GBP">GBP</option>
@@ -112,7 +112,7 @@ $curLang = defined(ICL_LANGUAGE_CODE) ? ICL_LANGUAGE_CODE : 'en';
 										</form>
 									</div>
 									<p class="free_shipping site-notice text-xs font-bold ff-montserrat">AUS WIDE EXPRESS SHIPPING 💌 SAME DAY MELB SHIPPING AVAILABLE</p>
-									<div class="flex flex-wrap items-center justify-end desktop-12">
+									<div class="hidden md:flex flex-wrap items-center justify-end desktop-12">
 										<ul id="cart" class="inline-block">
 											<li class="cart-overview">
 												<a href="<?php echo wc_get_cart_url() ?>"><i class="fa fa-shopping-cart"></i> Shopping Cart

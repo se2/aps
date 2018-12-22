@@ -5,7 +5,7 @@ global $menuInfo, $staticContentMeta;
 
 	<footer class="site-footer">
 		<div class="row footer-top flex flex-wrap">
-			<div class="w-full md:w-1/2 lg:w-1/5">
+			<div class="mb-2 lg:mb-0 w-full md:w-1/2 lg:w-1/5">
 				<?php $menuName = get_menu_name_by_location( 'secondary' ); ?>
 				<h3>
 					<span><?php echo $menuName; ?></span>
@@ -18,7 +18,7 @@ global $menuInfo, $staticContentMeta;
 					<?php endforeach ?>
 				</ul>
 			</div>
-			<div class="w-full md:w-1/2 lg:w-1/5">
+			<div class="mb-2 lg:mb-0 w-full md:w-1/2 lg:w-1/5">
 				<?php $menuName = get_menu_name_by_location('tertiary') ?>
 				<h3>
 					<span><?php echo $menuName; ?></span>
@@ -31,7 +31,7 @@ global $menuInfo, $staticContentMeta;
 					<?php endforeach ?>
 				</ul>
 			</div>
-			<div class="w-full md:w-1/2 lg:w-1/5">
+			<div class="mb-2 lg:mb-0 w-full md:w-1/2 lg:w-1/5">
 				<h3>
 					<span>Contact us</span>
 				</h3>
@@ -65,8 +65,8 @@ global $menuInfo, $staticContentMeta;
 					</li>
 					<?php endif ?>
 				</ul>
-		</div>
-			<div class="w-full md:w-1/2 lg:w-2/5 footer-social">
+			</div>
+			<div class="mb-2 lg:mb-0 w-full md:w-1/2 lg:w-2/5 footer-social">
 				<h3>
 					<span>STAY CONNECTED</span>
 				</h3>

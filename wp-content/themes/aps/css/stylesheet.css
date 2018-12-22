@@ -1741,6 +1741,10 @@ ul#social-links li a:hover {
   color: #777;
 }
 
+#logo img {
+	max-width: 300px;
+}
+
 nav {
   background: #000000;
   font-family: "Roboto", sans-serif;

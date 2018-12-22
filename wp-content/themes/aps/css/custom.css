@@ -95,8 +95,14 @@ ul#nav li.dropdown ul.submenu {
 }
 
 .site-footer {
-  padding: 37px 0 110px;
+  padding: 37px 0;
   letter-spacing: 0.02em;
+}
+
+@media screen and (min-width: 769px) {
+	.site-footer {
+		padding: 37px 0 110px;
+	}
 }
 
 .site-footer a,
@@ -119,6 +125,10 @@ ul#nav li.dropdown ul.submenu {
 
 .footer-bottom img.payment {
   margin-right: 20px;
+}
+
+.footer-bottom img.payment:last-of-type {
+	margin-right: 0;
 }
 
 .site-footer .text span,
@@ -171,7 +181,6 @@ ul#nav li.dropdown ul.submenu {
 }
 
 .newsletter .input-group-btn {
-  float: left;
   width: auto;
   position: relative;
   font-size: 0;
