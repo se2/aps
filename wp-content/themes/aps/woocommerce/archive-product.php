@@ -33,24 +33,24 @@ get_header( 'shop' ); ?>
 		do_action( 'woocommerce_before_main_content' );
 	?>
 
-        <div id="breadcrumb" class="desktop-12">
-            <?php bcn_display() ?>
-        </div>
-        <div class="clear"></div>
+		<div id="breadcrumb" class="desktop-12 hidden">
+			<?php bcn_display() ?>
+		</div>
+		<div class="clear"></div>
 
-        <div id="collection-description" class="desktop-12 mobile-3">
-            <h1><?php woocommerce_page_title(); ?></h1>
-            <?php if( get_field( 'shop_banner_image', 'option' ) ): ?>
-                <?php $img = get_field( 'shop_banner_image', 'option' ) ?>
-                <?php if( get_field( 'shop_banner_url', 'option' ) ): ?>
-                    <a href="<?php the_field( 'shop_banner_url', 'option') ?>">
-                <?php endif ?>
-                        <img src="<?php echo $img['url'] ?>" style="width: 100vw;">
-                <?php if( get_field( 'shop_banner_url', 'option' ) ): ?>
-                    </a>
-                <?php endif ?>
-            <?php endif ?>
-        </div>
+		<div id="collection-description" class="w-full">
+			<h1 class="hidden"><?php woocommerce_page_title(); ?></h1>
+			<?php if ( get_field( 'shop_banner_image', 'option' ) ) : ?>
+				<?php $img = get_field( 'shop_banner_image', 'option' ); ?>
+				<?php if ( get_field( 'shop_banner_url', 'option' ) ) : ?>
+				<a href="<?php the_field( 'shop_banner_url', 'option' ); ?>">
+				<?php endif; ?>
+					<img src="<?php echo $img['url']; ?>" style="width: 100vw;">
+				<?php if ( get_field( 'shop_banner_url', 'option' ) ) : ?>
+				</a>
+				<?php endif; ?>
+			<?php endif; ?>
+		</div>
 
 		<?php
 			/**
@@ -105,13 +105,14 @@ get_header( 'shop' ); ?>
 				do_action( 'woocommerce_after_shop_loop' );
 			?>
 
-            <div id="looked-at" class="desktop-12 mobile-hide">
-                <div id="recently-viewed-products" class="collection clearfix">
-                    <h4>You also Viewed</h4>
-
-                    <?php echo do_shortcode('[woocommerce_recently_viewed_products per_page="6"]') ?>
-                </div>
-            </div>
+			<div id="looked-at" class="desktop-12 mobile-hide">
+				<div id="recently-viewed-products" class="collection clearfix">
+					<h2>
+						<span>Recently Viewed Products</span>
+					</h2>
+					<?php echo do_shortcode('[woocommerce_recently_viewed_products per_page="6"]') ?>
+				</div>
+			</div>
 
 		<?php elseif ( ! woocommerce_product_subcategories( array( 'before' => woocommerce_product_loop_start( false ), 'after' => woocommerce_product_loop_end( false ) ) ) ) : ?>
 

@@ -80,7 +80,7 @@ global $product;
                     <li><a href="#pop-three" class="fancybox">Returns</a></li>
                     <li><a href="#pop-four" class="fancybox">four</a></li>
                 </ul>
-            
+
                 <div id="pop-one" style="display: none">
                     <div><span style="color: #000000;">We are always happy to help with any query you have.</span></div>
                     <div><span style="color: #000000;">Just hit us up below or use the contact form &amp; we'll get back to you within the day!</span></div>
@@ -383,8 +383,8 @@ global $product;
                                                                                                value="contact"
                                                                                                name="form_type"/><input
                                 type="hidden" name="utf8" value="✓"/>
-            
-            
+
+
                         <div id="contactFormWrapper">
                             <p>
                                 <label>Name</label>
@@ -401,12 +401,12 @@ global $product;
                                 <input type="text" id="contactFormTelephone" name="contact[phone]"
                                        placeholder="Phone Number"/>
                             </p>
-            
+
                             <input type="hidden" name="contact[product]"
                                    value="CHUNKY PINK BIODEGRADABLE LOOSE GLITTER">
                             <input type="hidden" name="contact[producturl]"
                                    value="../../../products/chunky-pink-biodegradable-loose-glitter.html">
-            
+
                             <p>
                                 <label>Message</label>
                                 <textarea rows="15" cols="90" id="contactFormMessage" name="contact[body]"
@@ -417,7 +417,7 @@ global $product;
                                        value="Send"/>
                             </p>
                         </div>
-            
+
                     </form>
                 </div>-->
             </div>
@@ -452,9 +452,11 @@ global $product;
 <div class="clear"></div>
 
 <div id="looked-at" class="desktop-12 mobile-hide">
-    <div id="recently-viewed-products" class="collection clearfix">
-        <h4>You also Viewed</h4>
+	<div id="recently-viewed-products" class="collection clearfix">
+		<h2>
+			<span>Recently Viewed Products</span>
+		</h2>
 
-        <?php echo do_shortcode('[woocommerce_recently_viewed_products per_page="6"]') ?>
-    </div>
+		<?php echo do_shortcode('[woocommerce_recently_viewed_products per_page="6"]') ?>
+	</div>
 </div>
