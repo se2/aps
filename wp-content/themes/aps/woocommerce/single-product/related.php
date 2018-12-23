@@ -22,35 +22,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( $related_products ) : ?>
 
-    <div id="related" class="desktop-2 tablet-hide mobile-hide">
+	<div id="related" class="desktop-2 tablet-hide mobile-hide">
 
-        <h4 style="text-align: center;"><?php esc_html_e( 'More in this Collection', 'woocommerce' ); ?></h4>
+		<h4 style="text-align: center;"><?php esc_html_e( 'More in this Collection', 'woocommerce' ); ?></h4>
 
-        <ul class="related-products desktop-12">
+		<ul class="related-products desktop-12">
 
-			<?php foreach ( $related_products as $related_product ) : ?>
+			<?php
+			foreach ( $related_products as $related_product ) :
+				$post_object = get_post( $related_product->get_id() );
 
-				<?php
-				 	$post_object = get_post( $related_product->get_id() );
+				setup_postdata( $GLOBALS['post'] =& $post_object );
 
-					setup_postdata( $GLOBALS['post'] =& $post_object );
+				// wc_get_template_part( 'content', 'product' );
 
-					//wc_get_template_part( 'content', 'product' ); ?>
+				$image = wp_get_attachment_image_src( get_post_thumbnail_id( ) );
+			?>
+			<li>
+				<div class="image">
+					<a href="<?php echo get_permalink(); ?>" title="<?php echo get_the_title(); ?>">
+						<img src="<?php echo $image[0]; ?>" alt=""/>
+					</a>
+				</div>
+			</li>
+		<?php endforeach; ?>
 
-                <?php $image = wp_get_attachment_image_src( get_post_thumbnail_id( ) );?>
-                <li>
-                    <div class="image">
-                        <a href="<?php echo get_permalink() ?>" title="<?php echo get_the_title() ?>">
-                            <img src="<?php echo $image[0] ?>" alt=""/>
-                        </a>
-                    </div>
-                </li>
+		</ul>
 
-			<?php endforeach; ?>
-
-        </ul>
-
-    </div>
+	</div>
 
 <?php endif;
 

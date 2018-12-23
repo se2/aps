@@ -24,6 +24,7 @@ global $product;
 
 ?>
 <div itemprop="offers" itemscope>
-    <p class="product-price">
-        <span class="product-price" itemprop="price"><?php echo $product->get_price_html(); ?></span>
-    </p>
+	<p class="product-price">
+		<span class="product-price" itemprop="price"><?php echo $product->get_price_html(); ?></span>
+	</p>
+</div>

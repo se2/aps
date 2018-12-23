@@ -21,19 +21,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( $max_value && $min_value === $max_value ) {
-	?>
-	<div class="product-add quantity hidden">
-        <label for="quantity">Quantity</label>
-		<input type="hidden" class="qty" name="<?php echo esc_attr( $input_name ); ?>" value="<?php echo esc_attr( $min_value ); ?>" />
-	<?php
-} else {
-	?>
-	<div class="quantity product-add">
-        <label for="quantity">Quantity</label>
-		<input id="quantity" type="number" class="input-text qty text" step="<?php echo esc_attr( $step ); ?>"
-               min="<?php echo esc_attr( $min_value ); ?>" max="<?php echo esc_attr( 0 < $max_value ? $max_value : '' ); ?>"
-               name="<?php echo esc_attr( $input_name ); ?>" value="<?php echo esc_attr( $input_value ); ?>"
-               title="<?php echo esc_attr_x( 'Qty', 'Product quantity input tooltip', 'woocommerce' ) ?>" size="4"
-               pattern="<?php echo esc_attr( $pattern ); ?>" inputmode="<?php echo esc_attr( $inputmode ); ?>" />
-	<?php
-}
+?>
+<div class="product-add quantity hidden">
+	<label for="quantity">Quantity</label>
+	<input type="hidden" class="qty" name="<?php echo esc_attr( $input_name ); ?>" value="<?php echo esc_attr( $min_value ); ?>" />
+<?php } else { ?>
+<div class="quantity product-add">
+	<label for="quantity">Quantity</label>
+	<input id="quantity" type="number" class="input-text qty text" step="<?php echo esc_attr( $step ); ?>"
+		min="<?php echo esc_attr( $min_value ); ?>" max="<?php echo esc_attr( 0 < $max_value ? $max_value : '' ); ?>"
+		name="<?php echo esc_attr( $input_name ); ?>" value="<?php echo esc_attr( $input_value ); ?>"
+		title="<?php echo esc_attr_x( 'Qty', 'Product quantity input tooltip', 'woocommerce' ) ?>" size="4"
+		pattern="<?php echo esc_attr( $pattern ); ?>" inputmode="<?php echo esc_attr( $inputmode ); ?>" />
+
+<?php } ?>
+</div>
