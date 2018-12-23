@@ -39,14 +39,27 @@ get_header( 'shop' ); ?>
 		<div class="clear"></div>
 
 		<div id="collection-description" class="w-full">
+			<?php
+			$shop_link = get_field( 'shop_banner_url', 'option' );
+			$image     = get_field( 'shop_banner_image', 'option' )['url'];
+			if ( is_product_category() ) {
+				global $wp_query;
+				$cat          = $wp_query->get_queried_object();
+				$thumbnail_id = get_woocommerce_term_meta( $cat->term_id, 'thumbnail_id', true );
+				$cat_image    = wp_get_attachment_url( $thumbnail_id );
+				if ( $cat_image ) {
+					$image     = $cat_image;
+					$shop_link = get_term_link( $cat->term_id, 'product_cat' );
+				}
+			}
+			?>
 			<h1 class="hidden"><?php woocommerce_page_title(); ?></h1>
-			<?php if ( get_field( 'shop_banner_image', 'option' ) ) : ?>
-				<?php $img = get_field( 'shop_banner_image', 'option' ); ?>
-				<?php if ( get_field( 'shop_banner_url', 'option' ) ) : ?>
-				<a href="<?php the_field( 'shop_banner_url', 'option' ); ?>">
+			<?php if ( $image ) : ?>
+				<?php if ( $shop_link ) : ?>
+				<a href="<?php echo esc_url( $shop_link ); ?>">
 				<?php endif; ?>
-					<img src="<?php echo $img['url']; ?>" style="width: 100vw;">
-				<?php if ( get_field( 'shop_banner_url', 'option' ) ) : ?>
+					<img src="<?php echo $image; ?>" style="width: 100vw;">
+				<?php if ( $shop_link ) : ?>
 				</a>
 				<?php endif; ?>
 			<?php endif; ?>
