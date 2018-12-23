@@ -37,39 +37,39 @@ $attachment_ids = $product->get_gallery_attachment_ids();
 ?>
 
 <div id="mob-product-images" class="owl-carousel desktop-hide tablet-hide mobile-3">
-    <div class="mthumb">
-        <img src="<?php echo $full_size_image[0] ?>" alt="<?php echo $image_title ?>">
-    </div>
-    <?php foreach( $attachment_ids as $attachment_id ) : ?>
-        <?php $image_link = wp_get_attachment_url( $attachment_id ); ?>
-        <?php $gallery_image_title = get_post_field( 'post_excerpt', $attachment_id ); ?>
-        <div class="mthumb">
-            <img src="<?php echo $image_link ?>" alt="<?php echo $gallery_image_title ?>">
-        </div>
-    <?php endforeach ?>
+	<div class="mthumb">
+		<img src="<?php echo $full_size_image[0] ?>" alt="<?php echo $image_title ?>">
+	</div>
+	<?php foreach( $attachment_ids as $attachment_id ) : ?>
+		<?php $image_link = wp_get_attachment_url( $attachment_id ); ?>
+		<?php $gallery_image_title = get_post_field( 'post_excerpt', $attachment_id ); ?>
+		<div class="mthumb">
+			<img src="<?php echo $image_link ?>" alt="<?php echo $gallery_image_title ?>">
+		</div>
+	<?php endforeach ?>
 </div>
 
-<div id="product-photos" class="desktop-5  tablet-3 mobile-hide">
-    <div class="bigimage desktop-10 tablet-5">
-        <img src="<?php echo $full_size_image[0] ?>" alt='<?php echo $image_title ?>' title="<?php echo $image_title ?>"/>
-    </div>
-    <a href="<?php echo $full_size_image[0] ?>" class="clicker">
-        <img class="thumbnail desktop-2 tablet-1" src="<?php echo $full_size_image[0] ?>" alt="<?php echo $image_title ?>"/>
-    </a>
-    <?php foreach( $attachment_ids as $attachment_id ) : ?>
-        <?php $image_link = wp_get_attachment_url( $attachment_id ); ?>
-        <?php $gallery_image_title = get_post_field( 'post_excerpt', $attachment_id ); ?>
-        <a href="<?php echo $image_link ?>" class="clicker">
-            <img class="thumbnail desktop-2 tablet-1" src="<?php echo $image_link ?>" alt="<?php echo $gallery_image_title ?>"/>
-        </a>
-    <?php endforeach ?>
+<div id="product-photos" class="desktop-5 tablet-3 mobile-hide">
+	<div class="bigimage desktop-12 tablet-5">
+		<img src="<?php echo $full_size_image[0] ?>" alt='<?php echo $image_title ?>' title="<?php echo $image_title ?>"/>
+	</div>
+	<a href="<?php echo $full_size_image[0] ?>" class="clicker">
+		<img class="thumbnail desktop-3 tablet-1" src="<?php echo $full_size_image[0] ?>" alt="<?php echo $image_title ?>"/>
+	</a>
+	<?php foreach( $attachment_ids as $attachment_id ) : ?>
+		<?php $image_link = wp_get_attachment_url( $attachment_id ); ?>
+		<?php $gallery_image_title = get_post_field( 'post_excerpt', $attachment_id ); ?>
+		<a href="<?php echo $image_link ?>" class="clicker">
+			<img class="thumbnail desktop-3 tablet-1" src="<?php echo $image_link ?>" alt="<?php echo $gallery_image_title ?>"/>
+		</a>
+	<?php endforeach ?>
 </div>
 
 <script>
-    $('.bigimage').zoom();
-    $('.clicker').click(function () {
-        var newImage = $(this).attr('href');
-        $('.bigimage img').attr({src: newImage});
-        return false;
-    });
+	$('.bigimage').zoom();
+	$('.clicker').click(function () {
+		var newImage = $(this).attr('href');
+		$('.bigimage img').attr({src: newImage});
+		return false;
+	});
 </script>
