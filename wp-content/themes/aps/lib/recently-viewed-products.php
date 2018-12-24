@@ -73,7 +73,7 @@ function rc_woocommerce_recently_viewed_products( $atts, $content = null ) {
 			$r->the_post();
 			$product = wc_get_product( $r->post->ID );
 			$price_html = $product->get_price_html();
-			$content .= '<div id="product-' . $r->post->ID . '" class="recently-view-product w-full md:w-1/2 lg:w-1/4 mb-5 md:mb-0">
+			$content .= '<div id="product-' . $r->post->ID . '" class="recently-view-product w-full md:w-1/2 lg:w-1/4 xl:w-1/5 mb-5">
 										<div class="image">
 											<a href="' . get_permalink( $r->post->ID ) . '" class="cy">
 												<img src="' . wp_get_attachment_image_src( get_post_thumbnail_id( $r->post->ID ), "medium" )[0] . '" />
