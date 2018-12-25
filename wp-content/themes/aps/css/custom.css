@@ -581,3 +581,7 @@ ul#nav li.dropdown ul.submenu {
 	max-height: 1000px;
 	transition: max-height .5s ease;
 }
+
+#instafeed {
+	overflow: auto;
+}
